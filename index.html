@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ДИГГЕР 3D // Бомбоубежище №17</title>
+<style>
+  :root{
+    --concrete:#2a2c26;
+    --concrete-dark:#17180f;
+    --rust:#a3521f;
+    --rust-bright:#c9701f;
+    --phosphor:#8fbf3f;
+    --phosphor-dim:#4d6b26;
+    --bone:#cfc9a8;
+    --warn:#d4b106;
+    --blood:#7a2020;
+  }
+  *{box-sizing:border-box;user-select:none;-webkit-user-select:none;}
+  html,body{
+    margin:0;padding:0;height:100%;
+    background:#000;color:var(--bone);
+    font-family:'Courier New', monospace;
+    overflow:hidden;
+  }
+  #topbar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:10px 18px;position:relative;z-index:5;
+    background:linear-gradient(180deg,#20221a,#141510);
+    border-bottom:4px solid var(--rust);
+    box-shadow:0 4px 12px rgba(0,0,0,.6);
+  }
+  #topbar h1{font-size:18px;margin:0;color:var(--warn);text-shadow:0 0 6px rgba(212,177,6,.5),2px 2px 0 #000;}
+  #topbar h1 span{color:var(--phosphor);}
+  #topRight{display:flex;align-items:center;gap:10px;}
+  #langSwitch{display:flex;gap:4px;}
+  .langbtn{
+    background:#20221a;border:1px solid #4c4c3a;color:#a7a48c;
+    font-family:inherit;font-size:11px;font-weight:900;letter-spacing:1px;
+    padding:4px 8px;cursor:pointer;
+  }
+  .langbtn.active{background:var(--phosphor-dim);color:#0a0a06;border-color:var(--phosphor);}
+  #stamp{border:2px solid var(--blood);color:var(--blood);padding:2px 8px;font-size:11px;transform:rotate(-4deg);font-weight:900;letter-spacing:2px;}
+  #wrap{display:flex;height:calc(100% - 54px);}
+  #stage{flex:1;position:relative;background:#000;}
+  #game{position:absolute;inset:0;width:100%;height:100%;display:block;}
+  #vignette{
+    position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(ellipse at 50% 55%, rgba(0,0,0,0) 40%, rgba(0,0,0,.75) 100%);
+  }
+  #stage.low-battery #vignette{
+    animation:flicker 2.2s infinite;
+    background:radial-gradient(ellipse at 50% 55%, rgba(80,10,10,0) 35%, rgba(90,10,10,.55) 100%);
+  }
+  #stage.raid #vignette{ animation:raidFlash 1s infinite; }
+  @keyframes flicker{0%,100%{opacity:1;}45%{opacity:.55;}50%{opacity:1;}72%{opacity:.7;}}
+  @keyframes raidFlash{
+    0%,100%{background:radial-gradient(ellipse at 50% 55%, rgba(120,10,10,0) 25%, rgba(170,20,20,.6) 100%);}
+    50%{background:radial-gradient(ellipse at 50% 55%, rgba(10,20,130,0) 25%, rgba(20,40,170,.55) 100%);}
+  }
+  #crosshair{
+    position:absolute;top:50%;left:50%;width:6px;height:6px;margin:-3px 0 0 -3px;
+    border-radius:50%;background:rgba(207,201,168,.55);pointer-events:none;
+  }
+  #toast{
+    position:absolute;top:14px;left:50%;transform:translateX(-50%);
+    background:#000;border:2px solid var(--phosphor);color:var(--phosphor);
+    padding:6px 14px;font-size:13px;letter-spacing:1px;max-width:80%;text-align:center;
+    opacity:0;pointer-events:none;transition:opacity .25s, top .25s;z-index:4;
+  }
+  #toast.show{opacity:1;top:24px;}
+  #pauseOverlay{
+    position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+    background:rgba(0,0,0,.55);color:var(--bone);font-size:15px;letter-spacing:1px;cursor:pointer;z-index:6;text-align:center;
+  }
+  #pauseOverlay.show{display:flex;}
+  #hud{
+    width:240px;min-width:210px;background:linear-gradient(180deg,#26271f,#161711);
+    border-left:4px solid var(--rust);padding:12px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;
+  }
+  .panel{background:var(--concrete);border:2px solid #000;box-shadow:inset 0 0 0 1px #4c4c3a, inset 0 2px 8px rgba(0,0,0,.5);padding:9px;}
+  .panel h2{margin:0 0 7px 0;font-size:12px;color:var(--phosphor);letter-spacing:2px;border-bottom:1px dashed var(--phosphor-dim);padding-bottom:4px;}
+  #battery-gauge{height:16px;background:#0a0a06;border:1px solid #000;box-shadow:inset 0 0 4px #000;position:relative;overflow:hidden;}
+  #battery-fill{height:100%;width:100%;background:linear-gradient(90deg,var(--blood),var(--warn),var(--phosphor));transition:width .2s;}
+  #battery-label{font-size:11px;margin-top:4px;}
+  #timer-val{font-size:22px;color:var(--phosphor);text-shadow:0 0 6px rgba(143,191,63,.5);}
+  #score-val{font-size:24px;color:var(--warn);text-shadow:0 0 6px rgba(212,177,6,.6);}
+  #inv-list{list-style:none;margin:0;padding:0;font-size:12px;max-height:100px;overflow-y:auto;}
+  #inv-list li{padding:4px 2px;border-bottom:1px solid #000;display:flex;justify-content:space-between;gap:6px;}
+  #inv-list li.rotten{color:#b06b3a;}
+  #inv-list li.good{color:var(--phosphor);}
+  #inv-list li span.qty{color:var(--bone);opacity:.7;}
+  #minimap{width:100%;background:#050502;border:1px solid #000;display:block;}
+  .legend{font-size:11px;line-height:1.55;color:#a7a48c;}
+  .legend b{color:var(--bone);}
+  #hint{font-size:11px;color:#8a876f;line-height:1.5;}
+  #chat-log{max-height:110px;overflow-y:auto;font-size:11px;line-height:1.45;background:#111207;border:1px solid #000;padding:4px;word-break:break-word;}
+  .chat-msg .name{color:var(--phosphor);margin-right:4px;font-weight:bold;}
+  .chat-msg.self .name{color:var(--warn);}
+  #chatInput{flex:1;padding:6px;background:#111207;border:1px solid #4c4c3a;color:var(--bone);font-family:inherit;font-size:12px;}
+  /* overlays */
+  #overlay{position:fixed;inset:0;background:rgba(4,4,2,.94);display:flex;align-items:center;justify-content:center;z-index:20;overflow-y:auto;}
+  #overlay.hidden{display:none;}
+  .card{max-width:540px;width:90%;background:var(--concrete);border:3px solid var(--rust);padding:26px 24px;box-shadow:0 0 0 6px #000, 0 20px 80px rgba(0,0,0,.9);margin:20px 0;}
+  .card h2{color:var(--warn);font-size:21px;margin-top:0;letter-spacing:2px;}
+  .card p{font-size:14px;line-height:1.6;color:var(--bone);}
+  .card ul{font-size:13px;line-height:1.7;color:#c8c4a8;}
+  .btn{display:inline-block;margin-top:14px;padding:10px 22px;background:var(--rust);color:#0a0a06;border:none;font-weight:900;letter-spacing:2px;cursor:pointer;font-family:inherit;box-shadow:0 4px 0 #5c2c10;}
+  .btn:hover{background:var(--rust-bright);}
+  .btn:active{transform:translateY(3px);box-shadow:0 1px 0 #5c2c10;}
+  .btn:disabled{opacity:.5;cursor:default;}
+  .btn.ghost{background:#3a3b30;color:var(--bone);box-shadow:0 4px 0 #16170f;opacity:.6;}
+  .btn.ghost.active{opacity:1;background:var(--phosphor-dim);color:#0a0a06;}
+  #resultBreak{margin:10px 0;font-size:13px;}
+  #resultBreak div{display:flex;justify-content:space-between;border-bottom:1px dotted #555;padding:3px 0;}
+  .tabs{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;}
+  .tabs .btn{margin-top:0;}
+  #mpForm,#randomForm{display:none;margin-top:12px;}
+  #mpForm input{width:100%;margin-bottom:8px;padding:9px;background:#111207;border:1px solid #4c4c3a;color:var(--bone);font-family:inherit;font-size:13px;}
+  #mpStatus{font-size:12px;min-height:16px;color:#b06b3a;margin-top:6px;}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <h1>БОМБОУБЕЖИЩЕ <span>№17</span> <small id="subtitleEl" style="font-size:11px;color:#8a876f;">/ 3D вылазка</small></h1>
+  <div id="topRight">
+    <div id="langSwitch">
+      <button class="langbtn" id="langRu">RU</button>
+      <button class="langbtn" id="langUk">UA</button>
+      <button class="langbtn" id="langEn">EN</button>
+    </div>
+    <div id="stamp">СЕКРЕТНО</div>
+  </div>
+</div>
+
+<div id="wrap">
+  <div id="stage">
+    <canvas id="game"></canvas>
+    <div id="vignette"></div>
+    <div id="crosshair"></div>
+    <div id="toast"></div>
+    <div id="pauseOverlay">НАЖМИ, ЧТОБЫ<br>ПРОДОЛЖИТЬ ОБЗОР</div>
+  </div>
+  <div id="hud">
+    <div class="panel">
+      <h2 id="hBattery">ФОНАРЬ / ЗАРЯД</h2>
+      <div id="battery-gauge"><div id="battery-fill"></div></div>
+      <div id="battery-label">100%</div>
+    </div>
+    <div class="panel"><h2 id="hTimer">ДО ЗАЧИСТКИ (ГБР/ЧРП)</h2><div id="timer-val">15:00</div></div>
+    <div class="panel"><h2 id="hScore">СЧЁТ ХАБАРА</h2><div id="score-val">0</div></div>
+    <div class="panel"><h2 id="hMap">КАРТА</h2><canvas id="minimap" width="200" height="140"></canvas></div>
+    <div class="panel"><h2 id="hBackpack">РЮКЗАК</h2><ul id="inv-list"><li style="color:#666">...</li></ul></div>
+    <div class="panel legend">
+      <h2 id="hLegend">ОБОЗНАЧЕНИЯ</h2>
+      <div id="legGas">🎭 противогаз — целый / гнилой</div>
+      <div id="legAid">🩹 аптечка</div>
+      <div id="legAi2">💊 АИ‑2</div>
+      <div id="legBatt">🔋 батарейка</div>
+      <div id="legExit">🚪 выход</div>
+    </div>
+    <div class="panel">
+      <h2 id="hChat">ЧАТ</h2>
+      <div id="chat-log"></div>
+      <div style="display:flex;gap:4px;margin-top:6px;">
+        <input id="chatInput" type="text" placeholder="сообщение...">
+        <button class="btn" id="chatSendBtn" style="margin:0;padding:6px 10px;">➤</button>
+      </div>
+      <button class="btn ghost" id="btnVoice" style="width:100%;margin-top:6px;text-align:center;">🎤</button>
+    </div>
+    <div class="panel hint" id="hint">
+      ПК: WASD + мышь. Телефон: левая половина — ходьба, правая — обзор.
+    </div>
+  </div>
+</div>
+
+<div id="overlay">
+  <div class="card" id="cardIntro">
+    <h2 id="introTitle">ТЫ — ДИГГЕР</h2>
+    <p id="introP1"></p>
+    <p id="introP2"></p>
+    <ul>
+      <li id="liControls1"></li>
+      <li id="liControls2"></li>
+    </ul>
+    <div class="tabs">
+      <button class="btn ghost active" id="tabSolo">СОЛО</button>
+      <button class="btn ghost" id="tabMp">ПО КОДУ</button>
+      <button class="btn ghost" id="tabRandom">СЛУЧАЙНЫЙ</button>
+    </div>
+    <div id="mpForm">
+      <p id="mpDesc" style="font-size:12px;color:#a7a48c;line-height:1.5;margin:0 0 8px;"></p>
+      <input id="mpCode" type="text">
+    </div>
+    <div id="randomForm">
+      <p id="randomDesc" style="font-size:12px;color:#a7a48c;line-height:1.5;margin:0;"></p>
+    </div>
+    <div id="mpStatus"></div>
+    <button class="btn" id="btnStart">СПУСТИТЬСЯ ▾</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.5/peerjs.min.js"></script>
+<script>
+(function(){
+  "use strict";
+  const isTouch = 'ontouchstart' in window;
+
+  // ================= localization =================
+  const I18N = {
+    ru: {
+      title:'ДИГГЕР 3D // Бомбоубежище №17', subtitle:'/ 3D вылазка', stamp:'СЕКРЕТНО',
+      introTitle:'ТЫ — ДИГГЕР',
+      introP1:'То же бомбоубежище гражданской обороны — но теперь ты внутри, от первого лица. Аварийные лампы на потолке ещё где-то тлеют, но фонарь — твой главный источник света, и он садится. Собери противогазы (целые дороже гнилых), аптечки и пакеты АИ‑2, найди батарейки для подзарядки и выберись через <b>🚪</b>.',
+      introP2:'<b>У тебя 15 минут.</b> Ближе к концу нагрянет ГБР или ЧРП — весь хабар, который не успел подобрать, исчезнет, останется только то, что уже в рюкзаке.',
+      liControls1:'<b>ПК</b> — WASD ходьба, мышь — обзор (клик по экрану захватывает курсор, Esc отпускает, Enter — чат).',
+      liControls2:'<b>Телефон</b> — тяни по левой половине экрана, чтобы идти, по правой — чтобы оглядеться.',
+      tabSolo:'СОЛО', tabMp:'ПО КОДУ', tabRandom:'СЛУЧАЙНЫЙ',
+      mpDesc:'Сервер поднимать не надо — соединение напрямую между браузерами (P2P). Придумай код и скажи друзьям — первый вводит код и открывает комнату, остальные заходят по тому же коду.',
+      mpPlaceholder:'код комнаты, например bunker17',
+      randomDesc:'Подключит тебя к случайному диггеру, который тоже сейчас ищет напарника — без кода и договорённостей.',
+      btnStart:'СПУСТИТЬСЯ ▾', btnFindRandom:'НАЙТИ НАПАРНИКА ▾',
+      hBattery:'ФОНАРЬ / ЗАРЯД', hTimer:'ДО ЗАЧИСТКИ (ГБР/ЧРП)', hScore:'СЧЁТ ХАБАРА', hMap:'КАРТА', hBackpack:'РЮКЗАК', hLegend:'ОБОЗНАЧЕНИЯ',
+      legGas:'противогаз — целый / гнилой', legAid:'аптечка', legAi2:'АИ‑2', legBatt:'батарейка', legExit:'выход',
+      hint:'ПК: WASD + мышь (клик — захват курсора, Enter — чат).<br>Телефон: левая половина — ходьба, правая — обзор.<br>15 минут — потом нагрянет ГБР/ЧРП и хабар вокруг исчезнет.',
+      hChat:'ЧАТ', chatPlaceholder:'сообщение... (Enter)',
+      voiceOff:'🎤 включить голос', voiceOn:'🎤 голос включён',
+      pauseText:'НАЖМИ, ЧТОБЫ<br>ПРОДОЛЖИТЬ ОБЗОР', empty:'пусто...',
+      winTitle:'ВЫХОД НА ПОВЕРХНОСТЬ', loseTitle:'ФОНАРЬ ПОГАС...',
+      winText:'Ты выбрался наружу с хабаром. Ещё одна закрытая точка на самодельной карте диггера.',
+      loseText:'Заряд кончился в кромешной темноте бомбоубежища. Вылазку пришлось прервать здесь.',
+      resGasGood:'Целых противогазов', resGasBad:'Гнилых противогазов', resAid:'Аптечек', resAi2:'Пакетов АИ‑2', resScore:'Итоговый счёт',
+      btnAgain:'НОВАЯ ВЫЛАЗКА ▾',
+      toastGasGood:m=>`Найден целый противогаз ${m}!`, toastGasBad:m=>`Найден противогаз ${m} — сгнил, почти бесполезен.`,
+      toastAid:'Найдена аптечка.', toastAi2:'Найден индивидуальный пакет АИ‑2!', toastBatt:'Батарейка — фонарь подзаряжен.',
+      raidWarnMin:m=>`До зачистки ~${m} мин — ГБР уже выехала.`, raidWarnSec:s=>`ЧРП на подходе! ${s} сек!`,
+      raidGo:'ЧРП зашла в бункер! Хабар вокруг исчез — беги к выходу с тем, что уже взял!',
+      connLostHost:'Связь с хостом комнаты потеряна — вылазка продолжается офлайн.',
+      needCode:'Введи код комнаты (буквы латиницей и цифры).', connecting:'Открываю/ищу комнату...',
+      roomOpen:'Комната открыта — жди друзей.', roomJoined:'Подключено к комнате!',
+      connFail:'Не удалось подключиться. Проверь код и интернет, либо играй соло.',
+      searching:'Ищу случайного игрока...', randomFound:'Напарник найден!',
+      randomNone:'Сейчас никого не нашлось. Попробуй ещё раз чуть позже или используй код комнаты.',
+      micDenied:'Не удалось получить доступ к микрофону.', micOn:'Микрофон включён — голосовой чат активен.', micOff:'Микрофон выключен.',
+      needRoomForVoice:'Сначала подключись к комнате.',
+      labelGasGood:m=>`Противогаз ${m} (целый)`, labelGasBad:m=>`Противогаз ${m} (гнилой)`,
+      labelAid:'Аптечка', labelAi2:'Пакет АИ‑2', labelBatt:'Батарейка'
+    },
+    uk: {
+      title:'ДИГЕР 3D // Бомбосховище №17', subtitle:'/ 3D вилазка', stamp:'СЕКРЕТНО',
+      introTitle:'ТИ — ДИГЕР',
+      introP1:'Те саме бомбосховище цивільної оборони — але тепер ти всередині, від першої особи. Аварійні лампи на стелі десь ще жевріють, але ліхтарик — твоє головне джерело світла, і він сідає. Збери протигази (цілі дорожчі за гнилі), аптечки та пакети АІ‑2, знайди батарейки для підзарядки і вибирайся через <b>🚪</b>.',
+      introP2:'<b>У тебе 15 хвилин.</b> Ближче до кінця нагрянуть ГБР або ЧРП — весь хабар, який не встиг підібрати, зникне, залишиться лише те, що вже в рюкзаку.',
+      liControls1:'<b>ПК</b> — WASD ходьба, миша — огляд (клік по екрану захоплює курсор, Esc відпускає, Enter — чат).',
+      liControls2:'<b>Телефон</b> — тягни по лівій половині екрана, щоб іти, по правій — щоб роззирнутися.',
+      tabSolo:'СОЛО', tabMp:'ЗА КОДОМ', tabRandom:'ВИПАДКОВИЙ',
+      mpDesc:'Сервер піднімати не треба — з’єднання напряму між браузерами (P2P). Придумай код і скажи друзям — перший вводить код і відкриває кімнату, решта заходять за тим самим кодом.',
+      mpPlaceholder:'код кімнати, наприклад bunker17',
+      randomDesc:'Підключить тебе до випадкового дигера, який теж зараз шукає напарника — без коду і домовленостей.',
+      btnStart:'СПУСТИТИСЯ ▾', btnFindRandom:'ЗНАЙТИ НАПАРНИКА ▾',
+      hBattery:'ЛІХТАРИК / ЗАРЯД', hTimer:'ДО ЗАЧИСТКИ (ГБР/ЧРП)', hScore:'РАХУНОК ХАБАРУ', hMap:'КАРТА', hBackpack:'РЮКЗАК', hLegend:'ПОЗНАЧЕННЯ',
+      legGas:'протигаз — цілий / гнилий', legAid:'аптечка', legAi2:'АІ‑2', legBatt:'батарейка', legExit:'вихід',
+      hint:'ПК: WASD + миша (клік — захоплення курсора, Enter — чат).<br>Телефон: ліва половина — хода, права — огляд.<br>15 хвилин — потім нагрянуть ГБР/ЧРП і хабар навколо зникне.',
+      hChat:'ЧАТ', chatPlaceholder:'повідомлення... (Enter)',
+      voiceOff:'🎤 увімкнути голос', voiceOn:'🎤 голос увімкнено',
+      pauseText:'НАТИСНИ, ЩОБ<br>ПРОДОВЖИТИ ОГЛЯД', empty:'порожньо...',
+      winTitle:'ВИХІД НА ПОВЕРХНЮ', loseTitle:'ЛІХТАРИК ЗГАС...',
+      winText:'Ти вибрався назовні з хабаром. Ще одна закрита точка на саморобній карті дигера.',
+      loseText:'Заряд скінчився в цілковитій темряві бомбосховища. Вилазку довелося перервати тут.',
+      resGasGood:'Цілих протигазів', resGasBad:'Гнилих протигазів', resAid:'Аптечок', resAi2:'Пакетів АІ‑2', resScore:'Підсумковий рахунок',
+      btnAgain:'НОВА ВИЛАЗКА ▾',
+      toastGasGood:m=>`Знайдено цілий протигаз ${m}!`, toastGasBad:m=>`Знайдено протигаз ${m} — згнив, майже марний.`,
+      toastAid:'Знайдено аптечку.', toastAi2:'Знайдено індивідуальний пакет АІ‑2!', toastBatt:'Батарейка — ліхтарик підзаряджено.',
+      raidWarnMin:m=>`До зачистки ~${m} хв — ГБР вже виїхала.`, raidWarnSec:s=>`ЧРП на підході! ${s} сек!`,
+      raidGo:'ЧРП зайшла в бункер! Хабар навколо зник — біжи до виходу з тим, що вже взяв!',
+      connLostHost:'Зв’язок з хостом кімнати втрачено — вилазка триває офлайн.',
+      needCode:'Введи код кімнати (латиниця та цифри).', connecting:'Відкриваю/шукаю кімнату...',
+      roomOpen:'Кімнату відкрито — чекай друзів.', roomJoined:'Підключено до кімнати!',
+      connFail:'Не вдалося підключитися. Перевір код та інтернет, або грай соло.',
+      searching:'Шукаю випадкового гравця...', randomFound:'Напарника знайдено!',
+      randomNone:'Зараз нікого не знайшлося. Спробуй ще раз пізніше або скористайся кодом кімнати.',
+      micDenied:'Не вдалося отримати доступ до мікрофона.', micOn:'Мікрофон увімкнено — голосовий чат активний.', micOff:'Мікрофон вимкнено.',
+      needRoomForVoice:'Спершу підключися до кімнати.',
+      labelGasGood:m=>`Протигаз ${m} (цілий)`, labelGasBad:m=>`Протигаз ${m} (гнилий)`,
+      labelAid:'Аптечка', labelAi2:'Пакет АІ‑2', labelBatt:'Батарейка'
+    },
+    en: {
+      title:'DIGGER 3D // Bunker No.17', subtitle:'/ 3D raid', stamp:'CLASSIFIED',
+      introTitle:'YOU ARE A DIGGER',
+      introP1:'The same Cold-War civil defense bunker — but now you\u2019re inside it, first-person. A few emergency lamps still glow on the ceiling, but your flashlight is the main light source, and its battery is draining. Grab gas masks (intact ones are worth more than rotten ones), first-aid kits and AI‑2 medical kits, find batteries to recharge, and get out through the <b>🚪</b>.',
+      introP2:'<b>You have 15 minutes.</b> Near the end, security or a rapid-response crew will show up — any loot you haven\u2019t grabbed yet disappears, only what\u2019s already in your backpack stays.',
+      liControls1:'<b>Desktop</b> — WASD to move, mouse to look (click the screen to lock the cursor, Esc releases it, Enter opens chat).',
+      liControls2:'<b>Phone</b> — drag on the left half of the screen to walk, the right half to look around.',
+      tabSolo:'SOLO', tabMp:'BY CODE', tabRandom:'RANDOM',
+      mpDesc:'No server needed — the connection is direct, browser-to-browser (P2P). Make up a code and tell your friends — whoever enters it first opens the room, everyone else joins with the same code.',
+      mpPlaceholder:'room code, e.g. bunker17',
+      randomDesc:'Pairs you with a random digger who is also looking for a partner right now — no code or arranging needed.',
+      btnStart:'DESCEND ▾', btnFindRandom:'FIND A PARTNER ▾',
+      hBattery:'FLASHLIGHT / CHARGE', hTimer:'UNTIL THE RAID', hScore:'LOOT SCORE', hMap:'MAP', hBackpack:'BACKPACK', hLegend:'LEGEND',
+      legGas:'gas mask — intact / rotten', legAid:'first-aid kit', legAi2:'AI‑2 kit', legBatt:'battery', legExit:'exit',
+      hint:'Desktop: WASD + mouse (click to lock cursor, Enter for chat).<br>Phone: left half — walk, right half — look.<br>15 minutes — then security shows up and the loot around you disappears.',
+      hChat:'CHAT', chatPlaceholder:'message... (Enter)',
+      voiceOff:'🎤 enable voice', voiceOn:'🎤 voice on',
+      pauseText:'CLICK TO<br>RESUME LOOKING AROUND', empty:'empty...',
+      winTitle:'REACHED THE SURFACE', loseTitle:'FLASHLIGHT DIED...',
+      winText:'You made it out with your loot. Another closed-off spot on the digger\u2019s hand-drawn map.',
+      loseText:'The battery ran out in the pitch-black bunker. The raid had to end right here.',
+      resGasGood:'Intact gas masks', resGasBad:'Rotten gas masks', resAid:'First-aid kits', resAi2:'AI‑2 kits', resScore:'Final score',
+      btnAgain:'NEW RAID ▾',
+      toastGasGood:m=>`Found an intact ${m} gas mask!`, toastGasBad:m=>`Found a ${m} gas mask — rotten, barely useful.`,
+      toastAid:'Found a first-aid kit.', toastAi2:'Found an AI‑2 personal medical kit!', toastBatt:'Battery — flashlight recharged.',
+      raidWarnMin:m=>`~${m} min until the raid — they\u2019re already on the way.`, raidWarnSec:s=>`Almost here! ${s} sec!`,
+      raidGo:'They\u2019ve entered the bunker! The loot around you is gone — run for the exit with what you\u2019ve got!',
+      connLostHost:'Lost connection to the room host — the raid continues offline.',
+      needCode:'Enter a room code (Latin letters and digits).', connecting:'Opening/looking for the room...',
+      roomOpen:'Room open — waiting for friends.', roomJoined:'Connected to the room!',
+      connFail:'Could not connect. Check the code and your internet, or play solo.',
+      searching:'Looking for a random player...', randomFound:'Partner found!',
+      randomNone:'No one around right now. Try again in a bit, or use a room code instead.',
+      micDenied:'Could not get microphone access.', micOn:'Microphone on — voice chat active.', micOff:'Microphone off.',
+      needRoomForVoice:'Connect to a room first.',
+      labelGasGood:m=>`${m} gas mask (intact)`, labelGasBad:m=>`${m} gas mask (rotten)`,
+      labelAid:'First-aid kit', labelAi2:'AI‑2 kit', labelBatt:'Battery'
+    }
+  };
+  let curLang = 'ru';
+  function L(){ return I18N[curLang]; }
+
+  // ================= seeded RNG (so multiplayer peers share one maze) =================
+  function hashCode(str){
+    let h=0;
+    for(let i=0;i<str.length;i++){ h=(Math.imul(31,h)+str.charCodeAt(i))|0; }
+    return h>>>0;
+  }
+  function mulberry32(seed){
+    return function(){
+      seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+      let t = Math.imul(seed ^ seed>>>15, 1 | seed);
+      t = t + Math.imul(t ^ t>>>7, 61 | t) ^ t;
+      return ((t ^ t>>>14) >>> 0) / 4294967296;
+    };
+  }
+  let rng = Math.random;
+
+  // ================= maze generation =================
+  const COLS = 11, ROWS = 7;
+  const W = COLS*2+1, H = ROWS*2+1;
+  const TILE = 4;
+  const WALL_H = 3.1;
+  const EYE = 1.6;
+
+  function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+  function generateMaze(){
+    const grid = Array.from({length:H}, ()=>Array(W).fill(1));
+    const visited = Array.from({length:ROWS}, ()=>Array(COLS).fill(false));
+    const stack=[[0,0]]; visited[0][0]=true; grid[1][1]=0;
+    while(stack.length){
+      const [cx,cy]=stack[stack.length-1];
+      const dirs=shuffle([[0,-1],[0,1],[-1,0],[1,0]]);
+      let carved=false;
+      for(const [dx,dy] of dirs){
+        const nx=cx+dx, ny=cy+dy;
+        if(nx>=0&&nx<COLS&&ny>=0&&ny<ROWS&&!visited[ny][nx]){
+          visited[ny][nx]=true;
+          grid[cy*2+1+dy][cx*2+1+dx]=0;
+          grid[ny*2+1][nx*2+1]=0;
+          stack.push([nx,ny]); carved=true; break;
+        }
+      }
+      if(!carved) stack.pop();
+    }
+    let extra=Math.floor(COLS*ROWS*0.07);
+    while(extra-->0){
+      const x=1+2*Math.floor(rng()*COLS), y=1+2*Math.floor(rng()*ROWS);
+      const dir=rng()<0.5?[1,0]:[0,1];
+      const wx=x+dir[0], wy=y+dir[1];
+      if(wx>0&&wx<W-1&&wy>0&&wy<H-1) grid[wy][wx]=0;
+    }
+    return grid;
+  }
+  function bfsFarthest(grid,sx,sy){
+    const dist=Array.from({length:H},()=>Array(W).fill(-1));
+    dist[sy][sx]=0; const q=[[sx,sy]]; let far=[sx,sy],head=0;
+    while(head<q.length){
+      const [x,y]=q[head++];
+      if(dist[y][x]>dist[far[1]][far[0]]) far=[x,y];
+      for(const [dx,dy] of [[0,-1],[0,1],[-1,0],[1,0]]){
+        const nx=x+dx, ny=y+dy;
+        if(nx>0&&nx<W-1&&ny>0&&ny<H-1&&grid[ny][nx]===0&&dist[ny][nx]===-1){
+          dist[ny][nx]=dist[y][x]+1; q.push([nx,ny]);
+        }
+      }
+    }
+    return far;
+  }
+
+  // items are stored language-independently; text is generated at display time via itemLabel()/itemToast()
+  const MASK_TYPES = ["ГП‑5","ПМГ‑2","ШМ‑41М","РШ‑4","ГП‑7"];
+  function makeItemData(kind){
+    if(kind==='gas'){
+      const maskType = MASK_TYPES[Math.floor(rng()*MASK_TYPES.length)];
+      const rotten = rng()<0.42;
+      return {icon:'🎭', kind:'gas', maskType, rotten, pts: rotten?5:15, cls: rotten?'rotten':'good'};
+    }
+    if(kind==='aid') return {icon:'🩹', kind:'aid', pts:10, cls:'good'};
+    if(kind==='ai2') return {icon:'💊', kind:'ai2', pts:20, cls:'good'};
+    if(kind==='batt') return {icon:'🔋', kind:'batt', pts:0, cls:'good'};
+  }
+  function itemLabel(d){
+    const Lc=L();
+    if(d.kind==='gas') return d.rotten? Lc.labelGasBad(d.maskType) : Lc.labelGasGood(d.maskType);
+    if(d.kind==='aid') return Lc.labelAid;
+    if(d.kind==='ai2') return Lc.labelAi2;
+    return Lc.labelBatt;
+  }
+  function itemToast(d){
+    const Lc=L();
+    if(d.kind==='gas') return d.rotten? Lc.toastGasBad(d.maskType) : Lc.toastGasGood(d.maskType);
+    if(d.kind==='aid') return Lc.toastAid;
+    if(d.kind==='ai2') return Lc.toastAi2;
+    return Lc.toastBatt;
+  }
+
+  // ================= three.js setup =================
+  const stageEl = document.getElementById('stage');
+  const canvas = document.getElementById('game');
+  const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x000000);
+  scene.fog = new THREE.Fog(0x000000, 2, 24);
+
+  const camera = new THREE.PerspectiveCamera(72, 1, 0.1, 100);
+  const pitchObject = new THREE.Object3D(); pitchObject.add(camera);
+  const yawObject = new THREE.Object3D(); yawObject.add(pitchObject);
+  scene.add(yawObject);
+
+  const ambient = new THREE.AmbientLight(0x232619, 0.42);
+  scene.add(ambient);
+
+  const flashlight = new THREE.SpotLight(0xdfe9c9, 1.5, 12, Math.PI/6.2, 0.55, 1.3);
+  flashlight.position.set(0,0,0);
+  camera.add(flashlight);
+  const flashTarget = new THREE.Object3D(); flashTarget.position.set(0,0,-1);
+  camera.add(flashTarget); flashlight.target = flashTarget;
+
+  function makeNoiseTexture(size, base, variance){
+    const cnv=document.createElement('canvas'); cnv.width=cnv.height=size;
+    const c=cnv.getContext('2d');
+    c.fillStyle=`rgb(${base[0]},${base[1]},${base[2]})`;
+    c.fillRect(0,0,size,size);
+    const img=c.getImageData(0,0,size,size);
+    for(let i=0;i<img.data.length;i+=4){
+      const n=(Math.random()-0.5)*variance;
+      img.data[i]=Math.min(255,Math.max(0,img.data[i]+n));
+      img.data[i+1]=Math.min(255,Math.max(0,img.data[i+1]+n));
+      img.data[i+2]=Math.min(255,Math.max(0,img.data[i+2]+n));
+    }
+    c.putImageData(img,0,0);
+    for(let i=0;i<size*0.35;i++){
+      c.strokeStyle=`rgba(0,0,0,${Math.random()*0.18})`;
+      c.beginPath();
+      let x=Math.random()*size,y=Math.random()*size; c.moveTo(x,y);
+      for(let s=0;s<4;s++){x+=(Math.random()-0.5)*36;y+=(Math.random()-0.5)*36;c.lineTo(x,y);}
+      c.stroke();
+    }
+    const tex=new THREE.CanvasTexture(cnv);
+    tex.wrapS=tex.wrapT=THREE.RepeatWrapping;
+    return tex;
+  }
+
+  const iconCache = {};
+  function getIconTexture(emoji){
+    if(iconCache[emoji]) return iconCache[emoji];
+    const cnv=document.createElement('canvas'); cnv.width=cnv.height=128;
+    const c=cnv.getContext('2d');
+    c.font='96px serif'; c.textAlign='center'; c.textBaseline='middle';
+    c.fillText(emoji,64,70);
+    const tex=new THREE.CanvasTexture(cnv);
+    iconCache[emoji]=tex;
+    return tex;
+  }
+  let glowTexCache=null;
+  function getGlowTexture(){
+    if(glowTexCache) return glowTexCache;
+    const cnv=document.createElement('canvas'); cnv.width=cnv.height=128;
+    const c=cnv.getContext('2d');
+    const g=c.createRadialGradient(64,64,0,64,64,64);
+    g.addColorStop(0,'rgba(255,255,255,1)');
+    g.addColorStop(1,'rgba(255,255,255,0)');
+    c.fillStyle=g; c.fillRect(0,0,128,128);
+    glowTexCache=new THREE.CanvasTexture(cnv);
+    return glowTexCache;
+  }
+  function makeNameTexture(name){
+    const cnv=document.createElement('canvas'); cnv.width=256; cnv.height=64;
+    const c=cnv.getContext('2d');
+    c.fillStyle='rgba(0,0,0,.55)'; c.fillRect(0,0,256,64);
+    c.font='bold 28px monospace'; c.fillStyle='#cfe89f'; c.textAlign='center'; c.textBaseline='middle';
+    c.fillText(name||'Digger', 128,32);
+    return new THREE.CanvasTexture(cnv);
+  }
+
+  // ================= game state =================
+  let grid, start, exitCell, player, battery, score, inventory;
+  let explored, gameOver, won, gameStarted=false, paused=false;
+  let itemSprites = {};
+  let wallMesh, exitLight, exitSprite;
+  let ambientLamps = [];
+  let raidTime, raidTriggered, raidWarned;
+
+  // multiplayer state (serverless: PeerJS's free public signaling cloud + WebRTC P2P)
+  let netMode = 'solo'; // 'solo' | 'code' | 'random'
+  let connected=false, isHost=false;
+  let peer=null, hostConn=null;
+  let clientConns = {};
+  let myId = null;
+  let playerName = 'Digger-'+Math.random().toString(36).slice(2,6).toUpperCase();
+  let remotePlayers = {};
+  let chatLog = [];
+  let voiceOn=false, localStream=null;
+  let calledPeers = new Set();
+  const remoteAudios = {};
+
+  function clearGroup(){
+    Object.values(itemSprites).forEach(o=>scene.remove(o.sprite));
+    itemSprites = {};
+    if(wallMesh){ scene.remove(wallMesh); wallMesh=null; }
+    if(exitLight){ scene.remove(exitLight); exitLight=null; }
+    if(exitSprite){ scene.remove(exitSprite); exitSprite=null; }
+    ambientLamps.forEach(l=>{ scene.remove(l.light); scene.remove(l.glow); });
+    ambientLamps = [];
+    scene.children.slice().forEach(o=>{ if(o.userData && o.userData.disposable) scene.remove(o); });
+  }
+
+  function buildLevel(){
+    clearGroup();
+    grid = generateMaze();
+    start = [1,1];
+    exitCell = bfsFarthest(grid, start[0], start[1]);
+
+    const wallPositions=[];
+    for(let y=0;y<H;y++) for(let x=0;x<W;x++) if(grid[y][x]===1) wallPositions.push([x,y]);
+    const wallGeo = new THREE.BoxGeometry(TILE, WALL_H, TILE);
+    const wallTex = makeNoiseTexture(256,[42,44,36],26);
+    const wallMat = new THREE.MeshStandardMaterial({map:wallTex, roughness:1, metalness:0});
+    wallMesh = new THREE.InstancedMesh(wallGeo, wallMat, wallPositions.length);
+    const dummy = new THREE.Object3D();
+    wallPositions.forEach(([x,y],i)=>{
+      dummy.position.set(x*TILE+TILE/2, WALL_H/2, y*TILE+TILE/2);
+      dummy.updateMatrix();
+      wallMesh.setMatrixAt(i, dummy.matrix);
+    });
+    wallMesh.instanceMatrix.needsUpdate = true;
+    wallMesh.userData.disposable = true;
+    scene.add(wallMesh);
+
+    const floorTex = makeNoiseTexture(256,[20,21,15],18);
+    floorTex.repeat.set(W,H);
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(W*TILE,H*TILE),
+      new THREE.MeshStandardMaterial({map:floorTex, roughness:1}));
+    floor.rotation.x = -Math.PI/2;
+    floor.position.set(W*TILE/2, 0, H*TILE/2);
+    floor.userData.disposable = true;
+    scene.add(floor);
+
+    const ceilTex = makeNoiseTexture(256,[12,13,9],14);
+    ceilTex.repeat.set(W,H);
+    const ceil = new THREE.Mesh(new THREE.PlaneGeometry(W*TILE,H*TILE),
+      new THREE.MeshStandardMaterial({map:ceilTex, roughness:1}));
+    ceil.rotation.x = Math.PI/2;
+    ceil.position.set(W*TILE/2, WALL_H, H*TILE/2);
+    ceil.userData.disposable = true;
+    scene.add(ceil);
+
+    let lampCandidates=[];
+    for(let ry=0; ry<ROWS; ry++) for(let rx=0; rx<COLS; rx++){
+      const x=rx*2+1, y=ry*2+1;
+      if(grid[y][x]===0 && !(x===start[0]&&y===start[1]) && !(x===exitCell[0]&&y===exitCell[1])) lampCandidates.push([x,y]);
+    }
+    shuffle(lampCandidates);
+    const lampCells = lampCandidates.slice(0,8);
+    lampCells.forEach(([x,y],i)=>{
+      const warm = i%2===0;
+      const color = warm ? 0xc9a24a : 0x8fae4a;
+      const light = new THREE.PointLight(color, 0.85, 7.5, 2);
+      light.position.set(x*TILE+TILE/2, WALL_H-0.35, y*TILE+TILE/2);
+      scene.add(light);
+      const glow = new THREE.Sprite(new THREE.SpriteMaterial({
+        map:getGlowTexture(), color, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending
+      }));
+      glow.scale.set(1.3,1.3,1.3);
+      glow.position.copy(light.position);
+      scene.add(glow);
+      ambientLamps.push({light, glow, phase:rng()*10, base:0.85});
+    });
+
+    let floorCells=[];
+    for(let y=1;y<H-1;y++) for(let x=1;x<W-1;x++)
+      if(grid[y][x]===0 && !(x===start[0]&&y===start[1]) && !(x===exitCell[0]&&y===exitCell[1]))
+        floorCells.push([x,y]);
+    shuffle(floorCells);
+    const counts = {gas:5, aid:3, ai2:2, batt:5};
+    let idx=0;
+    for(const kind in counts){
+      for(let i=0;i<counts[kind];i++){
+        if(idx>=floorCells.length) break;
+        const [x,y]=floorCells[idx++];
+        const data = makeItemData(kind);
+        const tex = getIconTexture(data.icon);
+        const mat = new THREE.SpriteMaterial({map:tex, transparent:true, depthWrite:false});
+        const spr = new THREE.Sprite(mat);
+        spr.scale.set(1.15,1.15,1.15);
+        spr.position.set(x*TILE+TILE/2, 1.3, y*TILE+TILE/2);
+        spr.userData.seed = rng()*10;
+        scene.add(spr);
+        itemSprites[x+','+y] = {sprite:spr, data, type:kind};
+      }
+    }
+
+    exitLight = new THREE.PointLight(0xffb347, 1.0, 9, 2);
+    exitLight.position.set(exitCell[0]*TILE+TILE/2, 1.6, exitCell[1]*TILE+TILE/2);
+    scene.add(exitLight);
+    const exTex = getIconTexture('🚪');
+    exitSprite = new THREE.Sprite(new THREE.SpriteMaterial({map:exTex, transparent:true, depthWrite:false}));
+    exitSprite.scale.set(1.7,1.7,1.7);
+    exitSprite.position.set(exitCell[0]*TILE+TILE/2, 1.4, exitCell[1]*TILE+TILE/2);
+    scene.add(exitSprite);
+
+    player = {x:start[0]*TILE+TILE/2, z:start[1]*TILE+TILE/2};
+    yawObject.position.set(player.x, EYE, player.z);
+    yawObject.rotation.y = Math.PI * (Math.random()*2);
+    pitchObject.rotation.x = 0;
+
+    battery = 100; score = 0; inventory = [];
+    gameOver = false; won = false;
+    raidTime = 15*60; raidTriggered = false; raidWarned = new Set();
+    stageEl.classList.remove('raid');
+    explored = Array.from({length:H}, ()=>Array(W).fill(false));
+    markExplored();
+    updateHud();
+  }
+
+  function isWall(wx,wz){
+    const cx=Math.floor(wx/TILE), cz=Math.floor(wz/TILE);
+    if(cx<0||cx>=W||cz<0||cz>=H) return true;
+    return grid[cz][cx]===1;
+  }
+  function circleBlocked(x,z,r){
+    return isWall(x-r,z)||isWall(x+r,z)||isWall(x,z-r)||isWall(x,z+r)||
+      isWall(x-r*0.7,z-r*0.7)||isWall(x+r*0.7,z+r*0.7)||isWall(x-r*0.7,z+r*0.7)||isWall(x+r*0.7,z-r*0.7);
+  }
+  const PLAYER_R = 0.9;
+  function tryMovePlayer(dx,dz){
+    const nx = player.x+dx, nz = player.z+dz;
+    if(!circleBlocked(nx, player.z, PLAYER_R)) player.x = nx;
+    if(!circleBlocked(player.x, nz, PLAYER_R)) player.z = nz;
+  }
+
+  function markExplored(){
+    const cx=Math.floor(player.x/TILE), cz=Math.floor(player.z/TILE);
+    const R=3;
+    for(let y=Math.max(0,cz-R); y<=Math.min(H-1,cz+R); y++)
+      for(let x=Math.max(0,cx-R); x<=Math.min(W-1,cx+R); x++)
+        if(Math.hypot(x-cx,y-cz)<=R) explored[y][x]=true;
+  }
+
+  function lightRange(){
+    if(battery>55) return 12;
+    if(battery>28) return 9.5;
+    if(battery>10) return 7;
+    return 5;
+  }
+
+  function toast(msg){
+    const t=document.getElementById('toast');
+    t.textContent=msg; t.classList.add('show');
+    clearTimeout(toast._h);
+    toast._h=setTimeout(()=>t.classList.remove('show'),2200);
+  }
+
+  function fmtTime(s){
+    s=Math.max(0,Math.ceil(s));
+    const m=Math.floor(s/60), sec=s%60;
+    return m+':'+String(sec).padStart(2,'0');
+  }
+
+  function updateHud(){
+    document.getElementById('battery-fill').style.width=Math.max(0,battery)+'%';
+    document.getElementById('battery-label').textContent=Math.max(0,Math.round(battery))+'%';
+    document.getElementById('score-val').textContent=score;
+    stageEl.classList.toggle('low-battery', battery<18 && battery>0);
+    const tv=document.getElementById('timer-val');
+    tv.textContent = fmtTime(raidTime);
+    tv.style.color = raidTime<60 ? '#e05a3c' : raidTime<180 ? 'var(--warn)' : 'var(--phosphor)';
+    const list=document.getElementById('inv-list');
+    if(!inventory || inventory.length===0){ list.innerHTML=`<li style="color:#666">${L().empty}</li>`; }
+    else{
+      const counts={};
+      for(const d of inventory){
+        const key = d.kind + (d.kind==='gas' ? (d.rotten?'-r-':'-g-')+d.maskType : '');
+        counts[key] = counts[key] || {n:0, cls:d.cls, icon:d.icon, data:d};
+        counts[key].n++;
+      }
+      list.innerHTML=Object.values(counts).map(v=>
+        `<li class="${v.cls}"><span>${v.icon} ${itemLabel(v.data)}</span><span class="qty">×${v.n}</span></li>`).join('');
+    }
+  }
+
+  const mmCanvas = document.getElementById('minimap');
+  const mmCtx = mmCanvas.getContext('2d');
+  function drawMinimap(){
+    mmCtx.fillStyle='#050502'; mmCtx.fillRect(0,0,mmCanvas.width,mmCanvas.height);
+    const cellPx = Math.min(mmCanvas.width/W, mmCanvas.height/H);
+    const offX=(mmCanvas.width-W*cellPx)/2, offY=(mmCanvas.height-H*cellPx)/2;
+    for(let y=0;y<H;y++) for(let x=0;x<W;x++){
+      if(!explored[y][x]) continue;
+      mmCtx.fillStyle = grid[y][x]===1 ? '#3a3b30' : '#171810';
+      mmCtx.fillRect(offX+x*cellPx, offY+y*cellPx, cellPx, cellPx);
+    }
+    if(explored[exitCell[1]][exitCell[0]]){
+      mmCtx.fillStyle='#ffb347';
+      mmCtx.beginPath();
+      mmCtx.arc(offX+exitCell[0]*cellPx+cellPx/2, offY+exitCell[1]*cellPx+cellPx/2, cellPx*0.7,0,Math.PI*2);
+      mmCtx.fill();
+    }
+    for(const id in remotePlayers){
+      const rp = remotePlayers[id];
+      const rx=offX+(rp.group.position.x/TILE)*cellPx, ry=offY+(rp.group.position.z/TILE)*cellPx;
+      mmCtx.fillStyle='#e0a34a';
+      mmCtx.beginPath(); mmCtx.arc(rx,ry,2.6,0,Math.PI*2); mmCtx.fill();
+    }
+    const pcx=player.x/TILE, pcz=player.z/TILE;
+    const px=offX+pcx*cellPx, py=offY+pcz*cellPx;
+    const fwd = new THREE.Vector3(0,0,-1).applyQuaternion(yawObject.quaternion);
+    mmCtx.strokeStyle='#8fbf3f'; mmCtx.lineWidth=2;
+    mmCtx.beginPath(); mmCtx.moveTo(px,py); mmCtx.lineTo(px+fwd.x*9, py+fwd.z*9); mmCtx.stroke();
+    mmCtx.fillStyle='#cfe89f';
+    mmCtx.beginPath(); mmCtx.arc(px,py,3.2,0,Math.PI*2); mmCtx.fill();
+  }
+
+  function triggerRaid(){
+    raidTriggered = true;
+    stageEl.classList.add('raid');
+    toast(L().raidGo);
+    for(const key in itemSprites){
+      scene.remove(itemSprites[key].sprite);
+      delete itemSprites[key];
+    }
+  }
+
+  function showEnd(){
+    exitPointerLockSafe();
+    if(peer){ try{ peer.destroy(); }catch(e){} }
+    const Lc=L();
+    const gasGood = inventory.filter(i=>i.kind==='gas' && !i.rotten).length;
+    const gasBad = inventory.filter(i=>i.kind==='gas' && i.rotten).length;
+    const aid = inventory.filter(i=>i.kind==='aid').length;
+    const ai2 = inventory.filter(i=>i.kind==='ai2').length;
+    const overlay=document.getElementById('overlay');
+    overlay.innerHTML = `
+      <div class="card">
+        <h2>${won ? Lc.winTitle : Lc.loseTitle}</h2>
+        <p>${won ? Lc.winText : Lc.loseText}</p>
+        <div id="resultBreak">
+          <div><span>${Lc.resGasGood}</span><span>${gasGood}</span></div>
+          <div><span>${Lc.resGasBad}</span><span>${gasBad}</span></div>
+          <div><span>${Lc.resAid}</span><span>${aid}</span></div>
+          <div><span>${Lc.resAi2}</span><span>${ai2}</span></div>
+          <div><span><b>${Lc.resScore}</b></span><span><b>${score}</b></span></div>
+        </div>
+        <button class="btn" id="btnAgain">${Lc.btnAgain}</button>
+      </div>`;
+    overlay.classList.remove('hidden');
+    document.getElementById('btnAgain').onclick = ()=> location.reload();
+  }
+
+  // ================= chat =================
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function renderChat(){
+    const el = document.getElementById('chat-log');
+    el.innerHTML = chatLog.slice(-40).map(m=>
+      `<div class="chat-msg${m.self?' self':''}"><span class="name">${escapeHtml(m.name)}:</span>${escapeHtml(m.text)}</div>`).join('');
+    el.scrollTop = el.scrollHeight;
+  }
+  function sendChat(){
+    const inp = document.getElementById('chatInput');
+    const val = inp.value.trim();
+    if(val){
+      chatLog.push({name:playerName, text:val, self:true});
+      renderChat();
+      netSend({type:'chat', text:val, name:playerName});
+      inp.value='';
+    }
+    inp.blur();
+    if(!isTouch && gameStarted && !gameOver) canvas.requestPointerLock();
+  }
+
+  // ================= voice chat (WebRTC via PeerJS) =================
+  function attachAudio(id, stream){
+    let a = remoteAudios[id];
+    if(!a){ a=document.createElement('audio'); a.autoplay=true; a.style.display='none'; document.body.appendChild(a); remoteAudios[id]=a; }
+    a.srcObject = stream;
+  }
+  function detachAudio(id){
+    const a = remoteAudios[id];
+    if(a){ a.srcObject=null; a.remove(); delete remoteAudios[id]; }
+  }
+  function callPeer(id){
+    if(!peer || !localStream) return;
+    try{
+      const call = peer.call(id, localStream);
+      call.on('stream', s=>attachAudio(id, s));
+    }catch(e){}
+  }
+  function setupCallHandler(){
+    peer.on('call', call=>{
+      call.answer(localStream || undefined);
+      call.on('stream', s=>attachAudio(call.peer, s));
+    });
+  }
+  function updateVoiceBtn(){
+    const Lc=L(); const b=document.getElementById('btnVoice');
+    b.textContent = voiceOn? Lc.voiceOn : Lc.voiceOff;
+    b.classList.toggle('active', voiceOn);
+  }
+  async function toggleVoice(){
+    const Lc=L();
+    if(voiceOn){
+      voiceOn=false;
+      if(localStream){ localStream.getTracks().forEach(tr=>tr.stop()); localStream=null; }
+      updateVoiceBtn();
+      toast(Lc.micOff);
+      return;
+    }
+    if(!connected){ toast(Lc.needRoomForVoice); return; }
+    try{
+      localStream = await navigator.mediaDevices.getUserMedia({audio:true});
+    }catch(e){
+      toast(Lc.micDenied);
+      return;
+    }
+    voiceOn=true; updateVoiceBtn(); toast(Lc.micOn);
+    for(const id in remotePlayers){ if(!calledPeers.has(id)){ calledPeers.add(id); callPeer(id); } }
+  }
+
+  // ================= multiplayer networking =================
+  function getOrCreateRemote(id, name){
+    if(remotePlayers[id]) return remotePlayers[id];
+    const body = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.4,0.5,1.6,10),
+      new THREE.MeshStandardMaterial({color:0xc98a3a, roughness:1})
+    );
+    body.position.y = 0.8;
+    const label = new THREE.Sprite(new THREE.SpriteMaterial({map:makeNameTexture(name), depthWrite:false}));
+    label.scale.set(2,0.5,1);
+    label.position.y = 2.0;
+    const group = new THREE.Group();
+    group.add(body); group.add(label);
+    scene.add(group);
+    const rp = {group, target:new THREE.Vector3(player.x,0,player.z), targetYaw:0};
+    remotePlayers[id] = rp;
+    return rp;
+  }
+  function updateRemotePlayer(id,x,z,yaw,name){
+    const rp = getOrCreateRemote(id, name);
+    rp.target.set(x,0,z);
+    rp.targetYaw = yaw;
+  }
+  function removeRemotePlayer(id){
+    const rp = remotePlayers[id];
+    if(rp){ scene.remove(rp.group); delete remotePlayers[id]; }
+    detachAudio(id);
+    calledPeers.delete(id);
+  }
+  function handleNetMessage(msg){
+    if(!msg || msg.id===myId) return;
+    if(msg.type==='pos'){
+      updateRemotePlayer(msg.id, msg.x, msg.z, msg.yaw, msg.name);
+      if(voiceOn && !calledPeers.has(msg.id)){ calledPeers.add(msg.id); callPeer(msg.id); }
+    } else if(msg.type==='pickup'){
+      const it = itemSprites[msg.key];
+      if(it){ scene.remove(it.sprite); delete itemSprites[msg.key]; }
+    } else if(msg.type==='chat'){
+      chatLog.push({name:msg.name||'?', text:msg.text||'', self:false});
+      renderChat();
+    } else if(msg.type==='leave'){ removeRemotePlayer(msg.id); }
+  }
+  function netSend(msg){
+    if(!connected) return;
+    msg.id = myId;
+    if(isHost){
+      for(const pid in clientConns){ if(clientConns[pid].open) clientConns[pid].send(msg); }
+    } else if(hostConn && hostConn.open){
+      hostConn.send(msg);
+    }
+  }
+  function setupHostSideConn(conn){
+    conn.on('open', ()=>{ clientConns[conn.peer] = conn; });
+    conn.on('data', data=>{
+      handleNetMessage(data);
+      for(const pid in clientConns){
+        if(pid!==conn.peer && clientConns[pid].open) clientConns[pid].send(data);
+      }
+    });
+    conn.on('close', ()=>{
+      delete clientConns[conn.peer];
+      removeRemotePlayer(conn.peer);
+      for(const pid in clientConns){ if(clientConns[pid].open) clientConns[pid].send({type:'leave', id:conn.peer}); }
+    });
+  }
+
+  // room-code flow: try to claim the code as a Peer ID (become host); if taken, join as a client
+  function connectMultiplayer(roomId){
+    return new Promise((resolve,reject)=>{
+      const hostPeer = new Peer('digger-'+roomId, {debug:0});
+      let settled=false;
+      const failTimer=setTimeout(()=>{ if(!settled){settled=true; try{hostPeer.destroy();}catch(e){} reject(new Error('timeout'));} }, 8000);
+      hostPeer.on('open', id=>{
+        if(settled) return; settled=true; clearTimeout(failTimer);
+        peer=hostPeer; myId=id; isHost=true; connected=true;
+        peer.on('connection', conn=>setupHostSideConn(conn));
+        setupCallHandler();
+        resolve();
+      });
+      hostPeer.on('error', err=>{
+        if(settled) return;
+        if(err && err.type==='unavailable-id'){
+          settled=true; clearTimeout(failTimer);
+          try{ hostPeer.destroy(); }catch(e){}
+          const clientPeer = new Peer({debug:0});
+          const joinTimer=setTimeout(()=>{ try{clientPeer.destroy();}catch(e){} reject(new Error('timeout')); }, 8000);
+          clientPeer.on('open', id=>{
+            myId=id;
+            const conn = clientPeer.connect('digger-'+roomId, {reliable:true});
+            conn.on('open', ()=>{
+              clearTimeout(joinTimer);
+              peer=clientPeer; hostConn=conn; isHost=false; connected=true;
+              setupCallHandler();
+              resolve();
+            });
+            conn.on('data', data=>handleNetMessage(data));
+            conn.on('close', ()=>{ if(connected){connected=false; toast(L().connLostHost);} });
+          });
+          clientPeer.on('error', ()=>{ clearTimeout(joinTimer); reject(new Error('conn error')); });
+        } else {
+          settled=true; clearTimeout(failTimer);
+          reject(err || new Error('conn error'));
+        }
+      });
+    });
+  }
+
+  // random matchmaking: scan a small pool of public "slot" ids — first try to
+  // join someone already waiting, otherwise claim a free slot and wait a bit
+  function tryJoinSlot(id, waitMs){
+    return new Promise((resolve,reject)=>{
+      const p = new Peer({debug:0});
+      let settled=false;
+      p.on('open', ()=>{
+        const conn = p.connect(id, {reliable:true});
+        const t=setTimeout(()=>{ if(!settled){settled=true; try{p.destroy();}catch(e){} reject('timeout');} }, waitMs);
+        conn.on('open', ()=>{
+          if(settled) return; settled=true; clearTimeout(t);
+          myId=p.id; peer=p; hostConn=conn; isHost=false; connected=true;
+          conn.on('data', data=>handleNetMessage(data));
+          conn.on('close', ()=>{ if(connected){connected=false; toast(L().connLostHost);} });
+          setupCallHandler();
+          resolve(id);
+        });
+        conn.on('error', ()=>{ if(!settled){settled=true; clearTimeout(t); try{p.destroy();}catch(e){} reject('conn-error');} });
+      });
+      p.on('error', err=>{ if(!settled){settled=true; try{p.destroy();}catch(e){} reject(err);} });
+    });
+  }
+  function tryHostAndWaitForPeer(id, waitMs){
+    return new Promise((resolve,reject)=>{
+      const p = new Peer(id, {debug:0});
+      let settled=false;
+      const t1=setTimeout(()=>{ if(!settled){settled=true; try{p.destroy();}catch(e){} reject('id-timeout');} }, 6000);
+      p.on('open', ()=>{
+        clearTimeout(t1);
+        const t2=setTimeout(()=>{ if(!settled){settled=true; try{p.destroy();}catch(e){} reject('no-partner');} }, waitMs);
+        p.on('connection', conn=>{
+          if(settled) return; settled=true; clearTimeout(t2);
+          myId=p.id; peer=p; isHost=true; connected=true;
+          setupHostSideConn(conn);
+          peer.on('connection', c2=>setupHostSideConn(c2));
+          setupCallHandler();
+          resolve(id);
+        });
+      });
+      p.on('error', err=>{ if(!settled){settled=true; clearTimeout(t1); try{p.destroy();}catch(e){} reject(err);} });
+    });
+  }
+  async function findRandomMatch(){
+    const SLOTS = 8;
+    const order = [...Array(SLOTS).keys()].sort(()=>Math.random()-0.5);
+    for(const i of order){
+      try{ return await tryJoinSlot('digger-rand-'+i, 900); }catch(e){}
+    }
+    for(const i of order){
+      try{ return await tryHostAndWaitForPeer('digger-rand-'+i, 25000); }catch(e){}
+    }
+    throw new Error('no match');
+  }
+
+  // ================= input =================
+  const chatInputEl = document.getElementById('chatInput');
+  const keys = new Set();
+  window.addEventListener('keydown', e=>{
+    if(document.activeElement===chatInputEl) return;
+    keys.add(e.code);
+  });
+  window.addEventListener('keyup', e=>{
+    if(document.activeElement===chatInputEl) return;
+    keys.delete(e.code);
+  });
+  document.addEventListener('keydown', e=>{
+    if(document.activeElement===chatInputEl){
+      if(e.code==='Enter'){ e.preventDefault(); sendChat(); }
+      return;
+    }
+    if(e.code==='Enter' && gameStarted && !gameOver){
+      e.preventDefault();
+      exitPointerLockSafe();
+      chatInputEl.focus();
+    }
+  });
+  document.getElementById('chatSendBtn').addEventListener('click', sendChat);
+  document.getElementById('btnVoice').addEventListener('click', toggleVoice);
+
+  const SENS = 0.0022;
+  function applyLook(dx,dy){
+    yawObject.rotation.y -= dx*SENS;
+    pitchObject.rotation.x -= dy*SENS;
+    pitchObject.rotation.x = Math.max(-1.2, Math.min(1.2, pitchObject.rotation.x));
+  }
+  function onMouseMove(e){
+    if(document.pointerLockElement !== canvas) return;
+    applyLook(e.movementX, e.movementY);
+  }
+  document.addEventListener('mousemove', onMouseMove);
+
+  canvas.addEventListener('click', ()=>{
+    if(!isTouch && gameStarted && !gameOver) canvas.requestPointerLock();
+  });
+  document.addEventListener('pointerlockchange', ()=>{
+    paused = gameStarted && !gameOver && !isTouch && document.pointerLockElement !== canvas && document.activeElement!==chatInputEl;
+    document.getElementById('pauseOverlay').classList.toggle('show', paused);
+  });
+  document.getElementById('pauseOverlay').addEventListener('click', ()=>{
+    if(!isTouch) canvas.requestPointerLock();
+  });
+  function exitPointerLockSafe(){ if(document.pointerLockElement===canvas) document.exitPointerLock(); }
+
+  let moveTouchId=null, moveStart={x:0,y:0}, moveVec={x:0,y:0};
+  let lookTouchId=null, lookLast={x:0,y:0};
+  let joyEl=null;
+  function makeJoyEl(x,y){
+    const d=document.createElement('div');
+    d.style.cssText=`position:absolute;left:${x-40}px;top:${y-40}px;width:80px;height:80px;border:2px solid rgba(143,191,63,.5);border-radius:50%;pointer-events:none;z-index:3;`;
+    stageEl.appendChild(d);
+    return d;
+  }
+  canvas.addEventListener('touchstart', e=>{
+    for(const t of e.changedTouches){
+      const half = window.innerWidth * 0.5;
+      if(t.clientX < half && moveTouchId===null){
+        moveTouchId=t.identifier; moveStart={x:t.clientX,y:t.clientY}; moveVec={x:0,y:0};
+        if(joyEl) joyEl.remove();
+        joyEl = makeJoyEl(t.clientX,t.clientY);
+      } else if(t.clientX >= half && lookTouchId===null){
+        lookTouchId=t.identifier; lookLast={x:t.clientX,y:t.clientY};
+      }
+    }
+  }, {passive:true});
+  canvas.addEventListener('touchmove', e=>{
+    for(const t of e.changedTouches){
+      if(t.identifier===moveTouchId){
+        let dx=t.clientX-moveStart.x, dy=t.clientY-moveStart.y;
+        const R=45, len=Math.hypot(dx,dy);
+        if(len>R){ dx=dx/len*R; dy=dy/len*R; }
+        moveVec={x:dx/R, y:dy/R};
+      } else if(t.identifier===lookTouchId){
+        applyLook((t.clientX-lookLast.x)*2.1, (t.clientY-lookLast.y)*2.1);
+        lookLast={x:t.clientX,y:t.clientY};
+      }
+    }
+  }, {passive:true});
+  function endTouch(e){
+    for(const t of e.changedTouches){
+      if(t.identifier===moveTouchId){ moveTouchId=null; moveVec={x:0,y:0}; if(joyEl){joyEl.remove();joyEl=null;} }
+      if(t.identifier===lookTouchId){ lookTouchId=null; }
+    }
+  }
+  canvas.addEventListener('touchend', endTouch);
+  canvas.addEventListener('touchcancel', endTouch);
+
+  // ================= intro overlay: language + tabs =================
+  function applyLang(){
+    const Lc=L();
+    document.title = Lc.title;
+    document.getElementById('subtitleEl').textContent = Lc.subtitle;
+    document.getElementById('stamp').textContent = Lc.stamp;
+    document.getElementById('introTitle').textContent = Lc.introTitle;
+    document.getElementById('introP1').innerHTML = Lc.introP1;
+    document.getElementById('introP2').innerHTML = Lc.introP2;
+    document.getElementById('liControls1').innerHTML = Lc.liControls1;
+    document.getElementById('liControls2').innerHTML = Lc.liControls2;
+    document.getElementById('tabSolo').textContent = Lc.tabSolo;
+    document.getElementById('tabMp').textContent = Lc.tabMp;
+    document.getElementById('tabRandom').textContent = Lc.tabRandom;
+    document.getElementById('mpDesc').textContent = Lc.mpDesc;
+    document.getElementById('mpCode').placeholder = Lc.mpPlaceholder;
+    document.getElementById('randomDesc').textContent = Lc.randomDesc;
+    document.getElementById('hBattery').textContent = Lc.hBattery;
+    document.getElementById('hTimer').textContent = Lc.hTimer;
+    document.getElementById('hScore').textContent = Lc.hScore;
+    document.getElementById('hMap').textContent = Lc.hMap;
+    document.getElementById('hBackpack').textContent = Lc.hBackpack;
+    document.getElementById('hLegend').textContent = Lc.hLegend;
+    document.getElementById('legGas').textContent = '🎭 '+Lc.legGas;
+    document.getElementById('legAid').textContent = '🩹 '+Lc.legAid;
+    document.getElementById('legAi2').textContent = '💊 '+Lc.legAi2;
+    document.getElementById('legBatt').textContent = '🔋 '+Lc.legBatt;
+    document.getElementById('legExit').textContent = '🚪 '+Lc.legExit;
+    document.getElementById('hint').innerHTML = Lc.hint;
+    document.getElementById('hChat').textContent = Lc.hChat;
+    document.getElementById('chatInput').placeholder = Lc.chatPlaceholder;
+    document.getElementById('pauseOverlay').innerHTML = Lc.pauseText;
+    ['langRu','langUk','langEn'].forEach(id=>document.getElementById(id).classList.remove('active'));
+    document.getElementById(curLang==='ru'?'langRu':curLang==='uk'?'langUk':'langEn').classList.add('active');
+    updateStartButtonLabel();
+    updateVoiceBtn();
+    if(gameStarted) updateHud();
+    renderChat();
+  }
+  function updateStartButtonLabel(){
+    const btn=document.getElementById('btnStart');
+    if(!btn.disabled) btn.textContent = netMode==='random' ? L().btnFindRandom : L().btnStart;
+  }
+  function setLang(l){ curLang=l; applyLang(); }
+  document.getElementById('langRu').addEventListener('click', ()=>setLang('ru'));
+  document.getElementById('langUk').addEventListener('click', ()=>setLang('uk'));
+  document.getElementById('langEn').addEventListener('click', ()=>setLang('en'));
+
+  const tabSolo=document.getElementById('tabSolo'), tabMp=document.getElementById('tabMp'), tabRandom=document.getElementById('tabRandom');
+  function selectTab(mode){
+    netMode=mode;
+    tabSolo.classList.toggle('active', mode==='solo');
+    tabMp.classList.toggle('active', mode==='code');
+    tabRandom.classList.toggle('active', mode==='random');
+    document.getElementById('mpForm').style.display = mode==='code'?'block':'none';
+    document.getElementById('randomForm').style.display = mode==='random'?'block':'none';
+    document.getElementById('mpStatus').textContent='';
+    updateStartButtonLabel();
+  }
+  tabSolo.addEventListener('click', ()=>selectTab('solo'));
+  tabMp.addEventListener('click', ()=>selectTab('code'));
+  tabRandom.addEventListener('click', ()=>selectTab('random'));
+
+  // ================= game loop =================
+  const clock = new THREE.Clock();
+  const SPEED = 4.6;
+  const DRAIN = 0.62;
+  const RAID_WARN_LEVELS = [300,180,60,30,10];
+  let lastNetSend = 0;
+
+  function resize(){
+    const w = stageEl.clientWidth, h = stageEl.clientHeight;
+    renderer.setSize(w,h,false);
+    camera.aspect = w/h;
+    camera.updateProjectionMatrix();
+  }
+  window.addEventListener('resize', resize);
+
+  function updateItems(dt, t){
+    const camPos = new THREE.Vector3(); camera.getWorldPosition(camPos);
+    const range = lightRange();
+    for(const key in itemSprites){
+      const it = itemSprites[key];
+      const s = it.sprite;
+      s.position.y = 1.3 + Math.sin(t*2 + s.userData.seed)*0.12;
+      const d = camPos.distanceTo(s.position);
+      if(d < range*1.05){
+        s.visible = true;
+        s.material.opacity = THREE.MathUtils.clamp(1 - d/(range*1.05), 0.15, 1);
+      } else {
+        s.visible = false;
+      }
+      if(d < 1.7){
+        if(it.type==='batt'){ battery = Math.min(100, battery+26); }
+        else { inventory.push(it.data); score += it.data.pts; }
+        toast(itemToast(it.data));
+        scene.remove(s);
+        delete itemSprites[key];
+        netSend({type:'pickup', key:key});
+      }
+    }
+    const de = camPos.distanceTo(exitSprite.position);
+    if(de < range*1.2){ exitSprite.visible=true; exitSprite.material.opacity = THREE.MathUtils.clamp(1-de/(range*1.2),0.2,1); }
+    else exitSprite.visible=false;
+  }
+
+  function updateLamps(t){
+    ambientLamps.forEach(l=>{
+      const flick = 0.7 + 0.3*Math.sin(t*2.6 + l.phase) - (Math.sin(t*13+l.phase*3)>0.985 ? 0.35 : 0);
+      const v = Math.max(0.12, flick);
+      l.light.intensity = l.base * v;
+      l.glow.material.opacity = Math.max(0.12, Math.min(1,v));
+    });
+  }
+
+  function updateRemotePlayers(){
+    for(const id in remotePlayers){
+      const rp = remotePlayers[id];
+      rp.group.position.lerp(rp.target, 0.18);
+      let dyaw = rp.targetYaw - rp.group.rotation.y;
+      while(dyaw>Math.PI) dyaw-=Math.PI*2;
+      while(dyaw<-Math.PI) dyaw+=Math.PI*2;
+      rp.group.rotation.y += dyaw*0.18;
+    }
+  }
+
+  function loop(){
+    requestAnimationFrame(loop);
+    const dt = Math.min(clock.getDelta(), 0.05);
+    const t = clock.elapsedTime;
+
+    if(gameStarted && !gameOver && !paused){
+      let mf=0, mr=0;
+      if(keys.has('KeyW')||keys.has('ArrowUp')) mf+=1;
+      if(keys.has('KeyS')||keys.has('ArrowDown')) mf-=1;
+      if(keys.has('KeyD')||keys.has('ArrowRight')) mr+=1;
+      if(keys.has('KeyA')||keys.has('ArrowLeft')) mr-=1;
+      mf += -moveVec.y; mr += moveVec.x;
+      const len = Math.hypot(mf,mr);
+      if(len>1){ mf/=len; mr/=len; }
+
+      if(mf!==0 || mr!==0){
+        const fwd = new THREE.Vector3(0,0,-1).applyQuaternion(yawObject.quaternion);
+        const right = new THREE.Vector3(1,0,0).applyQuaternion(yawObject.quaternion);
+        const dx = (fwd.x*mf + right.x*mr) * SPEED * dt;
+        const dz = (fwd.z*mf + right.z*mr) * SPEED * dt;
+        tryMovePlayer(dx,dz);
+        yawObject.position.set(player.x, EYE, player.z);
+        markExplored();
+      }
+
+      battery -= dt*DRAIN;
+      const flicker = battery<15 ? (0.65+0.35*Math.sin(t*22)) : 1;
+      flashlight.distance = lightRange();
+      flashlight.intensity = 1.5*flicker;
+      updateLamps(t);
+      updateItems(dt, t);
+      updateRemotePlayers();
+
+      raidTime -= dt;
+      if(!raidTriggered){
+        for(const lvl of RAID_WARN_LEVELS){
+          if(raidTime<=lvl && !raidWarned.has(lvl)){
+            raidWarned.add(lvl);
+            if(lvl>=60) toast(L().raidWarnMin(Math.round(lvl/60)));
+            else toast(L().raidWarnSec(lvl));
+          }
+        }
+        if(raidTime<=0){ raidTime=0; triggerRaid(); }
+      }
+
+      if(connected && t-lastNetSend>0.12){
+        lastNetSend=t;
+        netSend({type:'pos', x:player.x, z:player.z, yaw:yawObject.rotation.y, name:playerName});
+      }
+
+      const dExit = Math.hypot(player.x-(exitCell[0]*TILE+TILE/2), player.z-(exitCell[1]*TILE+TILE/2));
+      if(dExit < 1.8){ won=true; gameOver=true; setTimeout(showEnd,150); }
+      else if(battery<=0){ battery=0; won=false; gameOver=true; setTimeout(showEnd,150); }
+
+      updateHud();
+      drawMinimap();
+    }
+
+    renderer.render(scene, camera);
+  }
+
+  async function startGame(){
+    const btn = document.getElementById('btnStart');
+    const statusEl = document.getElementById('mpStatus');
+    const Lc = L();
+    if(netMode==='code'){
+      const raw = document.getElementById('mpCode').value.trim();
+      const code = raw.toLowerCase().replace(/[^a-z0-9_-]/g,'').slice(0,40);
+      if(!code){ statusEl.style.color='#e05a3c'; statusEl.textContent = Lc.needCode; return; }
+      btn.disabled = true; btn.textContent = '...';
+      statusEl.style.color = '#b06b3a'; statusEl.textContent = Lc.connecting;
+      try{
+        await connectMultiplayer(code);
+        rng = mulberry32(hashCode(code));
+        statusEl.style.color = 'var(--phosphor)';
+        statusEl.textContent = isHost ? Lc.roomOpen : Lc.roomJoined;
+      }catch(e){
+        btn.disabled = false; updateStartButtonLabel();
+        statusEl.style.color = '#e05a3c'; statusEl.textContent = Lc.connFail;
+        return;
+      }
+    } else if(netMode==='random'){
+      btn.disabled = true; btn.textContent = '...';
+      statusEl.style.color = '#b06b3a'; statusEl.textContent = Lc.searching;
+      try{
+        const slotId = await findRandomMatch();
+        rng = mulberry32(hashCode('rand-session-'+slotId));
+        statusEl.style.color = 'var(--phosphor)'; statusEl.textContent = Lc.randomFound;
+      }catch(e){
+        btn.disabled = false; updateStartButtonLabel();
+        statusEl.style.color = '#e05a3c'; statusEl.textContent = Lc.randomNone;
+        return;
+      }
+    } else {
+      rng = Math.random;
+    }
+    document.getElementById('overlay').classList.add('hidden');
+    resize();
+    buildLevel();
+    gameStarted = true;
+    if(!isTouch) canvas.requestPointerLock();
+  }
+
+  document.getElementById('btnStart').addEventListener('click', startGame);
+
+  applyLang();
+  resize();
+  loop();
+})();
+</script>
+</body>
+</html>
