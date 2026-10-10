@@ -245,7 +245,10 @@ input,select{background:#111207;border:1px solid #4c4c3a;color:var(--b);font-fam
    <h3 data-i="shopBuy"></h3>
    <div class="sg" id="skinGrid"></div>
    <h3 data-i="shopWare"></h3>
-   <button class="mini" id="bSellAll" data-i="sellAll"></button>
+   <div class="row" style="margin-top:0">
+    <button class="mini" id="bSellAll" data-i="sellAll"></button>
+    <button class="mini" id="bDedupe" data-i="dedupeLbl"></button>
+   </div>
    <div id="wareList"></div>
   </div>
   <div class="tb" id="tab-prof">
@@ -341,6 +344,7 @@ listH:'ПУБЛІЧНІ СЕРВЕРИ',refresh:'⟳ ОНОВИТИ',srvEmpty:'�
 conn:'Підключаюсь...',full:'Сервер заповнено (15/15).',fail:'Не підключилось. Перевір код і інтернет.',needCode:'Введи код сервера.',
 hostHid:'Сервер піднято (прихований). Код: ',hostPub:'Сервер піднято! Код: ',
 shopBuy:'СКІНИ ПРОТИГАЗІВ — КУПИТИ',shopWare:'СКЛАД: НАДІТИ / ПРОДАТИ',sellAll:'ПРОДАТИ ВСІ МАСКИ ▾',
+dedupeLbl:'ЛИШИТИ ПО 1 ШТ ▾',
 owned:'КУПЛЕНО',buy:'КУПИТИ',wear:'НАДІТИ',unwear:'ЗНЯТИ',sell:'ПРОДАТИ',worn:'надіто',coins:'монет',empty:'порожньо',rotten:'☠ гнилий',
 profH:'СТАТИСТИКА',
 stR:'Вилазок',stE:'Вийшов через вентшахту',stC:'Забрала ГБР',stD:'Згинув у темряві',stM:'Масок знайдено',stCo:'Монет',stW:'На складі',stEq:'Надіто',stCol:'Колекція протигазів',
@@ -356,11 +360,11 @@ alarm:'⚠ СИГНАЛІЗАЦІЯ! ГБР виїхала — 3:00, вихід 
 winT:'ВИЙШОВ ПО ВЕНТШАХТІ',caughtT:'ЗАБРАЛА ГБР',darkT:'ЛІХТАРИК ЗГАС...',abT:'ВИЛАЗКУ ПОКИНУТО',
 winP:'Вибрався назовні по скобах. Хабар — на складі.',
 caughtP:'Таймер вийшов — тебе знайшли. Хабар конфісковано.',
-darkP:'Темрява. Вилазка скінчена тут.',abP:'Вилазку покинуто — хабар лишился внизу.',
+darkP:'Темрява. Вилазка скінчена тут.',abP:'Вилазку покинуто — хабар лишилось внизу.',
 resG:'Цілих масок',resB:'Гнилих масок',resS:'Рахунок',resBonus:'Бонус монет',resBank:'Масок на склад',resLost:'Хабар втрачено',btnMenu:'У МЕНЮ',
 pause:'ПАУЗА',resume:'ПРОДОВЖИТИ ▾',mktBtn:'БАРАХОЛКА',abandon:'КИНУТИ ВИЛАЗКУ',sure:'ТОЧНО КИНУТИ?!',
 mktT:'БАРАХОЛКА ГРАВЦІВ',mktNote:'P2P без сервера: анти‑читу немає, все на чесному слові.',
-mktListH:'ЛОТИ',mktNew:'ВИСТАВИТИ МАСКУ',mktMine:'МОЇ ЛОТИ',mktListBtn:'ВИСТАВИТИ',mktCancel:'ЗНЯТИ',mktBuy:'КУПИТИ',mktNone:'лотів поки немає',pricePh:'ціна',
+mktListH:'ЛОТИ',mktNew:'ВИСТАВИТИ МАСКУ',mktMine:'МОІ ЛОТИ',mktListBtn:'ВИСТАВИТИ',mktCancel:'ЗНЯТИ',mktBuy:'КУПИТИ',mktNone:'лотів поки немає',pricePh:'ціна',
 mktSold:function(n,p){return'Продано «'+n+'» за '+p+'◉'},mktBought:function(n){return'Куплено: '+n},
 noCoins:'Монет не вистачає.',denied:'Лот уже пішов.',needItem:'Обери маску і ціну.',needRoom:'Барахолка працює лише на сервері.',mktClose:'ЗАКРИТИ',
 lostHost:'Хост пішов — продовжуєш офлайн.',playersN:function(n){return n+' у мережі'},hostTag:'[хост]',mmSurf:'ПОВЕРХНЯ — шукай будку',
@@ -1512,6 +1516,38 @@ function sellAll(){
  PROF.coins+=t;saveP();sfxB(880,1320);renderShop();
  toast('Продано масок: '+n+' (+'+t+' ◉)');
 }
+/* ЛИШИТИ ПО 1 ШТ: прибирає дублікати, лишає по одній масці кожної моделі (цілу має пріоритет над гнилою) */
+function dedupe(){
+ if(!PROF)return;
+ var w=PROF.ware,keep={},nw=[],n=0,i;
+ for(i=0;i<w.length;i++){
+  var it=w[i];
+  if(it.kind==='skin'){
+   var k='s'+it.skinId;
+   if(!keep[k]){keep[k]=1;nw.push(it)}
+  }else if(it.kind==='gas'&&!it.rot){
+   var k2='g'+it.typeId;
+   if(!keep[k2]){keep[k2]=1;nw.push(it)}
+  }
+ }
+ for(i=0;i<w.length;i++){
+  var it2=w[i];
+  if(it2.kind==='gas'&&it2.rot){
+   var k3='g'+it2.typeId;
+   if(!keep[k3]){keep[k3]=1;nw.push(it2)}
+  }
+ }
+ n=w.length-nw.length;
+ if(n>0){
+  if(PROF.eq){
+   var found=false;
+   for(var m=0;m<nw.length;m++)if(nw[m].uid===PROF.eq)found=true;
+   if(!found)PROF.eq=null;
+  }
+  PROF.ware=nw;seedColl();saveP();renderShop();
+  toast('Прибрано дублікатів: '+n);
+ }else toast('Дублікатів немає.');
+}
 function renderProf(){
  if(!PROF)return;
  var s=PROF.stats,ncl=0;
@@ -1830,6 +1866,7 @@ document.querySelectorAll('.tabs button').forEach(function(b){b.onclick=function
  $('bJoin').onclick=function(){joinSrv($('codeIn').value)};
  $('bRefresh').onclick=refreshSrv;
  $('bSellAll').onclick=sellAll;
+ $('bDedupe').onclick=dedupe;
  $('bSend').addEventListener('click',sendChat);
  $('bMkt2').addEventListener('click',function(){mktOpen()?mktClose():openMkt()});
  $('bList').onclick=doList;
