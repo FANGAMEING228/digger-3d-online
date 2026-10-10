@@ -324,7 +324,7 @@ loginSub:'Обліковка зберігається локально в цьо
 namePh:'позивний (2+ симв.)',passPh:'пароль (3+ симв.)',login:'УВІЙТИ',reg:'СТВОРИТИ ОБЛІКОВКУ',guest:'ГОСТЕМ (без збереження)',
 shortCreds:'Позивний — 2+ симв., пароль — 3+.',taken:'Такий позивний уже зайнятий.',badLogin:'Немає такого позивного або пароль не той.',regOk:'Обліковку створено. Вітаємо у №17.',
 tabPlay:'ВИЛАЗКА',tabSrv:'СЕРВЕРИ',tabShop:'МАГАЗИН',tabProf:'ПРОФІЛЬ',
-lore:'Вечір, ліс, стара ГО‑будка з вентиляційною решіткою зверху — як на фото. Знайди її, відкрий решітку і спустись у бомбосховище №17. Протигази — лише в ящиках: у кожному 10 штук, цілі чи гнилі. Під час відкриття є 20% шанс сигналізації: таймер з ∞ стає 3:00, і вийти можна лише тією ж вентшахтою, поки ГБР не забрала тебе.',
+lore:'Вечір, ліс, стара ГО‑будка з вентиляційною решіткою зверху — як на фото. Знайди її, відкрий решітку і спустись у бомбосховище №17. У ящиках — 20 моделей протигазів СРСР, Росії та України: від ПДФ‑2Ш до ПМК‑3. При відкритті є 20% шанс сигналізації: таймер з ∞ стає 3:00, і вийти можна лише вентшахтою, поки ГБР не забрала тебе.',
 hints:'ПК: WASD + миша, E — дія, SPACE — стрибок, SHIFT — біг, F — ліхтарик, M — барахолка, Enter — чат.<br>Телефон: ліва половина — джойстик, права — поворот камери (палець можна ставити будь‑де, навіть на кнопки — свайп їх не натисне). Кнопки спрацьовують лише на короткий тап.',
 btnSolo:'СОЛО‑ВИЛАЗКА ▾',soundLbl:'звук',logout:'вийти',
 srvHost:'ПІДНЯТИ СЕРВЕР (до 15 дігерів)',srvNamePh:'назва сервера',hiddenLbl:'прихований сервер — не видно у списку, вхід лише за кодом',
@@ -335,10 +335,10 @@ hostHid:'Сервер піднято (прихований). Код: ',hostPub:'
 shopBuy:'СКІНИ ПРОТИГАЗІВ — КУПИТИ',shopWare:'СКЛАД: НАДІТИ / ПРОДАТИ',sellAll:'ПРОДАТИ ВСІ МАСКИ ▾',
 owned:'КУПЛЕНО',buy:'КУПИТИ',wear:'НАДІТИ',unwear:'ЗНЯТИ',sell:'ПРОДАТИ',worn:'надіто',coins:'монет',empty:'порожньо',rotten:'☠ гнилий',
 profH:'СТАТИСТИКА',
-stR:'Вилазок',stE:'Вийшов через вентшахту',stC:'Забрала ГБР',stD:'Згинув у темряві',stM:'Масок знайдено',stCo:'Монет',stW:'На складі',stEq:'Надіто',
+stR:'Вилазок',stE:'Вийшов через вентшахту',stC:'Забрала ГБР',stD:'Згинув у темряві',stM:'Масок знайдено',stCo:'Монет',stW:'На складі',stEq:'Надіто',stCol:'Колекція протигазів',
 noEng:'3D‑рушій не завантажився — потрібен інтернет. Перезавантаж сторінку.',noNet:'Мережа не завантажилась — мультиплеер недоступний, соло працює.',
 hBat:'ЛІХТАРИК / ЗАРЯД',hTimer:'ТАЙМЕР (∞ → тривога)',hScore:'РАХУНОК / МОНЕТИ',hMap:'КАРТА',hBag:'РЮКЗАК',hPlayers:'У МЕРЕЖІ',hChat:'ЧАТ',hLeg:'ПОЗНАЧЕННЯ',
-legCrate:'🧰 ящик = 10 протигазів',legAid:'🩹 аптечка',legAi2:'💊 АІ‑2',legBatt:'🔋 батарейка',legVent:'🪜 вентшахта (вхід/вихід)',
+legCrate:'🧰 ящик = 10 протигазів (20 моделей)',legAid:'🩹 аптечка',legAi2:'💊 АІ‑2',legBatt:'🔋 батарейка',legVent:'🪜 вентшахта (вхід/вихід)',
 chatPh:'повідомлення...',aidN:'Аптечка',ai2N:'АІ‑2',
 ipGrate:'відкрити решітку вентшахти',ipDown:'спуститись у бомбосховище',ipUp:'виластити через вентшахту',ipCrate:'вскрити ящик із протигазами',
 tStart:'Шукай бетонну будку з решіткою.',tGrate:'Решітка піддалася. Люк відкрито.',tDown:'Бомбосховище №17. Таймер ∞ — поки не завила сигналізація.',
@@ -368,9 +368,29 @@ admAlOn:'ТЕСТ СИГНАЛІЗАЦІЇ',admAlOff:'ВИМК СИГНАЛІЗ�
 admReset:'СКИНУТИ СТАТИСТИКУ',admKick:'КИКНУТИ',on:'УВІМК',off:'ВИМК'
 };
 
-/* ===== дані ===== */
-var MT=[{id:'gp5',n:'ГП‑5',c:0x5a5f45,v:15},{id:'pmg',n:'ПМГ‑2',c:0x3a4a3c,v:25},{id:'shm',n:'ШМ‑41М',c:0x50505c,v:40},{id:'rsh',n:'РШ‑4',c:0x3c4260,v:60},{id:'gp7',n:'ГП‑7',c:0x2f5040,v:90}];
-var MW=[42,27,17,10,4];
+/* ===== 20 протигазів СРСР/Росії/України ===== */
+var MT=[
+{id:'gp5',n:'ГП‑5',c:0x5a5f45,v:15},
+{id:'shm41',n:'ШМ‑41М',c:0x50505c,v:15},
+{id:'pdf2d',n:'ПДФ‑2Д',c:0x6a6455,v:12},
+{id:'pdf2s',n:'ПДФ‑2Ш',c:0x655f50,v:12},
+{id:'gp4u',n:'ГП‑4у',c:0x5a6b4a,v:18},
+{id:'shm1',n:'ШМ‑1',c:0x6b6b5a,v:20},
+{id:'shms',n:'ШМС',c:0x606a58,v:20},
+{id:'pmg',n:'ПМГ',c:0x3a4a3c,v:22},
+{id:'pmg2',n:'ПМГ‑2',c:0x354538,v:28},
+{id:'rsh4',n:'РШ‑4',c:0x3c4260,v:25},
+{id:'mm1',n:'ММ‑1',c:0x4a5450,v:35},
+{id:'pbf',n:'ПБФ',c:0x4f4a3a,v:40},
+{id:'gp7',n:'ГП‑7',c:0x2f5040,v:45},
+{id:'gp7v',n:'ГП‑7В',c:0x2a4a3a,v:55},
+{id:'pmk1',n:'ПМК‑1',c:0x2a3a2a,v:60},
+{id:'pmk2',n:'ПМК‑2',c:0x24322a,v:75},
+{id:'gp46',n:'ГП‑46',c:0x1c2a3a,v:65},
+{id:'pmk3',n:'ПМК‑3',c:0x20282a,v:90},
+{id:'gp9',n:'ГП‑9',c:0x203030,v:100},
+{id:'gp21',n:'ГП‑21',c:0x1a2a35,v:120}];
+var MW=[16,10,8,8,8,6,6,6,5,5,4,4,3,3,2,2,1,1,1,1];
 var SK=[{id:'gold',n:'Золотий ГП‑7',c:0xd8a825,p:300},
 {id:'black',n:'Чорний ПМГ',c:0x14161a,p:150},
 {id:'chrome',n:'Хром ШМ‑41',c:0xb9bdc6,p:250},
@@ -389,9 +409,10 @@ function saveSet(){LSset('d17set',JSON.stringify(SET))}
 var PROF=null;
 function accs(){try{return JSON.parse(LSget('d17acc')||'{}')}catch(e){return{}}}
 function nStats(){return{raids:0,esc:0,caught:0,dark:0,masks:0}}
-function saveP(){if(!PROF||PROF.guest)return;var a=accs();a[PROF.name]={pass:PROF.pass,coins:PROF.coins,ware:PROF.ware,eq:PROF.eq,stats:PROF.stats};LSset('d17acc',JSON.stringify(a));LSset('d17sess',PROF.name)}
-function mkP(name,pass,coins,ware,eq){return{name:name,pass:pass,guest:false,coins:coins,ware:ware,eq:eq,stats:nStats()}}
-function mkGuest(){var u=uid();return{name:'Guest-'+Math.random().toString(36).slice(2,5).toUpperCase(),guest:true,pass:0,coins:150,ware:[{uid:u,kind:'gas',typeId:'gp5',rot:false}],eq:u,stats:nStats()}}
+function saveP(){if(!PROF||PROF.guest)return;var a=accs();a[PROF.name]={pass:PROF.pass,coins:PROF.coins,ware:PROF.ware,eq:PROF.eq,stats:PROF.stats,coll:PROF.coll||{}};LSset('d17acc',JSON.stringify(a));LSset('d17sess',PROF.name)}
+function seedColl(){if(!PROF)return;if(!PROF.coll)PROF.coll={};for(var i=0;i<PROF.ware.length;i++)if(PROF.ware[i].kind==='gas')PROF.coll[PROF.ware[i].typeId]=1}
+function mkP(name,pass,coins,ware,eq){return{name:name,pass:pass,guest:false,coins:coins,ware:ware,eq:eq,stats:nStats(),coll:{}}}
+function mkGuest(){var u=uid();return{name:'Guest-'+Math.random().toString(36).slice(2,5).toUpperCase(),guest:true,pass:0,coins:150,ware:[{uid:u,kind:'gas',typeId:'gp5',rot:false}],eq:u,stats:nStats(),coll:{}}}
 function lmsg(m,ok){var e=$('lmsg');e.textContent=m||'';e.style.color=ok?'var(--p)':'#b06b3a'}
 function showLogin(){$('lv').style.display='block';$('mmn').style.display='none';lmsg('')}
 function showMM(){$('lv').style.display='none';$('mmn').style.display='block'}
@@ -401,21 +422,21 @@ function doReg(){
  var a=accs();
  if(a[n]){lmsg(L.taken);return}
  var u=uid();
- a[n]={pass:R0(p),coins:150,ware:[{uid:u,kind:'gas',typeId:'gp5',rot:false}],eq:u,stats:nStats()};
+ a[n]={pass:R0(p),coins:150,ware:[{uid:u,kind:'gas',typeId:'gp5',rot:false}],eq:u,stats:nStats(),coll:{gp5:1}};
  LSset('d17acc',JSON.stringify(a));LSset('d17sess',n);
- PROF=mkP(n,R0(p),150,JSON.parse(JSON.stringify(a[n].ware)),u);PROF.stats=a[n].stats;
+ PROF=mkP(n,R0(p),150,JSON.parse(JSON.stringify(a[n].ware)),u);PROF.stats=a[n].stats;PROF.coll={gp5:1};
  lmsg(L.regOk,true);showMM();renderShop();renderProf();
 }
 function doLog(){
  var n=$('liN').value.trim(),p=$('liP').value,a=accs()[n];
  if(!a||a.pass!==R0(p)){lmsg(L.badLogin);return}
  LSset('d17sess',n);
- PROF=mkP(n,a.pass,a.coins,JSON.parse(JSON.stringify(a.ware)),a.eq);PROF.stats=a.stats||nStats();
+ PROF=mkP(n,a.pass,a.coins,JSON.parse(JSON.stringify(a.ware)),a.eq);PROF.stats=a.stats||nStats();PROF.coll=a.coll||{};seedColl();
  showMM();renderShop();renderProf();
 }
 function initProf(){
  var s=LSget('d17sess'),a=s?accs()[s]:null;
- if(a){PROF=mkP(s,a.pass,a.coins,JSON.parse(JSON.stringify(a.ware)),a.eq);PROF.stats=a.stats||nStats();showMM();renderShop();renderProf()}
+ if(a){PROF=mkP(s,a.pass,a.coins,JSON.parse(JSON.stringify(a.ware)),a.eq);PROF.stats=a.stats||nStats();PROF.coll=a.coll||{};seedColl();showMM();renderShop();renderProf()}
  else{showLogin();if(!STORE)lmsg(L.storeWarn)}
 }
 
@@ -1014,6 +1035,7 @@ window.addEventListener('beforeunload',function(){try{if(NET.peer)NET.peer.destr
 function grantIt(d){
  if(!d||!d.item)return;
  PROF.ware.push({uid:uid(),kind:d.item.kind,typeId:d.item.typeId,skinId:d.item.skinId,rot:!!d.item.rot});
+ seedColl();
  PROF.coins=Math.max(0,PROF.coins-(d.price||0));
  saveP();sfxB(880,1320);toast(L.mktBought(wLbl(d.item)));drawMkt();
 }
@@ -1083,7 +1105,7 @@ function mktClose(){
  if(started&&run&&!over){paused=false;if(!isT){try{cv.requestPointerLock()}catch(e){}}}
 }
 
-/* ===== АДМІН (пін 1679: набери на клавіатурі / надішли в чат / тапни штамп) ===== */
+/* ===== АДМІН (пін 1679) ===== */
 var ADMIN=false,pinBuf='',godBat=false,admSpd=false,frzT=false;
 function showAdmTab(){
  if(!ADMIN)return;
@@ -1150,7 +1172,7 @@ function drawAdm(dst){
    drawInv();bars();toast(L.admMkInv(n));
   }else{
    for(var j=0;j<n;j++){var ty2=t==='all'?MT[wpick(MW)]:mtById(t);PROF.ware.push({kind:'gas',typeId:ty2.id,rot:false,uid:uid()})}
-   saveP();renderShop();renderProf();toast(L.admMkWr(n));
+   seedColl();saveP();renderShop();renderProf();toast(L.admMkWr(n));
   }
  };
  q('#aGod').onclick=function(){godBat=!godBat;drawAdm(dst)};
@@ -1353,8 +1375,9 @@ function sellAll(){
 }
 function renderProf(){
  if(!PROF)return;
- var s=PROF.stats;
- $('pstats').innerHTML=[[L.stR,s.raids],[L.stE,s.esc],[L.stC,s.caught],[L.stD,s.dark],[L.stM,s.masks],[L.stCo,PROF.coins],[L.stW,PROF.ware.length],[L.stEq,wornL()||'—']].map(function(r){return'<div>'+r[0]+': <b>'+r[1]+'</b></div>'}).join('');
+ var s=PROF.stats,ncl=0;
+ for(var k in (PROF.coll||{}))ncl++;
+ $('pstats').innerHTML=[[L.stR,s.raids],[L.stE,s.esc],[L.stC,s.caught],[L.stD,s.dark],[L.stM,s.masks],[L.stCo,PROF.coins],[L.stW,PROF.ware.length],[L.stEq,wornL()||'—'],[L.stCol,ncl+'/'+MT.length]].map(function(r){return'<div>'+r[0]+': <b>'+r[1]+'</b></div>'}).join('');
 }
 
 /* ===== кінець вилазки ===== */
@@ -1365,7 +1388,7 @@ function endRun(why){
  var m=inv.filter(function(i){return i.kind==='gas'});
  var gg=0;for(var i=0;i<m.length;i++)if(!m[i].rot)gg++;
  var bank=0,bonus=0,lost=0;
- if(why==='escape'){for(var j=0;j<m.length;j++)PROF.ware.push(m[j]);bank=m.length;bonus=Math.floor(sc/2);PROF.coins+=bonus;PROF.stats.esc++}
+ if(why==='escape'){for(var j=0;j<m.length;j++)PROF.ware.push(m[j]);bank=m.length;bonus=Math.floor(sc/2);PROF.coins+=bonus;PROF.stats.esc++;seedColl()}
  else lost=m.length;
  PROF.stats.raids++;PROF.stats.masks+=m.length;
  if(why==='caught')PROF.stats.caught++;
@@ -1661,7 +1684,7 @@ document.querySelectorAll('.tabs button').forEach(function(b){b.onclick=function
 }});
  $('bLogin').onclick=doLog;
  $('bReg').onclick=doReg;
- $('bGuest').onclick=function(){PROF=mkGuest();showMM();renderShop();renderProf();toast(L.tStart)};
+ $('bGuest').onclick=function(){PROF=mkGuest();seedColl();showMM();renderShop();renderProf();toast(L.tStart)};
  $('bOut').onclick=function(){LSrm('d17sess');PROF=null;showLogin()};
  $('bSolo').onclick=function(){startGame('solo')};
  $('bHost').onclick=function(){hostSrv($('srvN').value.trim()||(PROF.name+' srv'),$('hidChk').checked)};
