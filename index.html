@@ -6,20 +6,19 @@
 <title>ДИГГЕР 3D // Бомбосховище №17</title>
 <script>
 (function(){
-var lg='uk';try{if(localStorage.getItem('d17lang')==='ru')lg='ru'}catch(e){}
 function box(id,col,bg){
  var b=document.getElementById(id);
  if(!b){b=document.createElement('div');b.id=id;b.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:99999;'+bg+';'+col+';font:bold 12px "Courier New",monospace;padding:8px 12px;white-space:pre-wrap;border-top:3px solid currentColor';(document.body||document.documentElement).appendChild(b)}
  return b;
 }
-window.__err=function(m){try{var b=box('ebx','color:#ffb3b3','background:#4a0e0e');b.style.display='block';b.textContent=(lg==='ru'?'ОШИБКА: ':'ПОМИЛКА: ')+m}catch(e){}};
+window.__err=function(m){try{var b=box('ebx','color:#ffb3b3','background:#4a0e0e');b.style.display='block';b.textContent='ПОМИЛКА: '+m}catch(e){}};
 window.__warn=function(){try{
  var ms=[];if(!window.THREE)ms.push('three.js (3D)');if(!window.Peer)ms.push('peerjs (мультиплеер)');
  if(!ms.length)return;
  var b=box('wbx','color:#ffe9a0','background:#4a3a0e');b.style.display='block';
- b.textContent=(lg==='ru'?'⚠ Не загрузилось из интернета: ':'⚠ Не завантажилось з інтернету: ')+ms.join(' + ')+(lg==='ru'?'. Проверь интернет и перезагрузи страницу.':'. Перевір інтернет і перезавантаж сторінку.');
+ b.textContent='⚠ Не завантажилось з інтернету: '+ms.join(' + ')+'. Перевір інтернет і перезавантаж сторінку.';
 }catch(e){}};
-window.addEventListener('error',function(e){var m=(e&&e.message)?e.message:String(e),ln=(e&&e.lineno)?((lg==='ru'?' (строка ':' (рядок ')+e.lineno+')'):'';window.__err(m+ln)});
+window.addEventListener('error',function(e){var m=(e&&e.message)?e.message:String(e),ln=(e&&e.lineno)?(' (рядок '+e.lineno+')'):'';window.__err(m+ln)});
 window.addEventListener('load',function(){setTimeout(window.__warn,700)});
 })();
 </script>
@@ -32,10 +31,8 @@ button{font-family:inherit}
 #topbar h1{font-size:18px;margin:0;color:var(--w);text-shadow:2px 2px 0 #000}
 #topbar h1 span{color:var(--p)}
 #sub{font-size:11px;color:#8a876f}
-#langbar{display:flex;gap:4px}
-.lb{background:#20221a;border:1px solid #4c4c3a;color:#a7a48c;font-size:11px;font-weight:900;letter-spacing:1px;padding:4px 8px;cursor:pointer}
-.lb.on{background:var(--pd);color:#0a0a06;border-color:var(--p)}
-#stamp{border:2px solid var(--bl);color:var(--bl);padding:2px 8px;font-size:11px;transform:rotate(-4deg);font-weight:900}
+#bAdm{background:#20221a;border:1px solid #4c4c3a;color:#a7a48c;font-size:13px;font-weight:900;padding:4px 8px;cursor:pointer}
+#stamp{border:2px solid var(--bl);color:var(--bl);padding:2px 8px;font-size:11px;transform:rotate(-4deg);font-weight:900;cursor:pointer}
 #wrap{display:flex;height:calc(100% - 52px)}
 #stage{flex:1;position:relative;background:#000;touch-action:none}
 #cv{position:absolute;inset:0;width:100%;height:100%;display:block}
@@ -96,7 +93,7 @@ body.touch #mctl{display:block}
 .uc{display:flex;align-items:center;gap:8px;background:#1b1c14;border:1px solid #4c4c3a;padding:5px 10px;font-size:12px}
 .uc .co{color:var(--w);font-weight:900}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
-.tabs button{flex:1;min-width:88px;padding:9px 6px;background:#26271f;border:1px solid #4c4c3a;color:#a7a48c;letter-spacing:1px;font-weight:900;font-size:11px;cursor:pointer}
+.tabs button{flex:1;min-width:80px;padding:9px 6px;background:#26271f;border:1px solid #4c4c3a;color:#a7a48c;letter-spacing:1px;font-weight:900;font-size:11px;cursor:pointer}
 .tabs button.on{background:var(--pd);color:#0a0a06;border-color:var(--p)}
 .tb{display:none}.tb.on{display:block}
 .tb h3{color:var(--p);letter-spacing:2px;font-size:13px;margin:14px 0 8px;border-bottom:1px dashed var(--pd);padding-bottom:4px}
@@ -146,10 +143,7 @@ input,select{background:#111207;border:1px solid #4c4c3a;color:var(--b);font-fam
 <div id="topbar">
  <h1><span data-i="brand" style="color:inherit"></span> <span>№17</span> <small id="sub"></small></h1>
  <div style="display:flex;align-items:center;gap:10px">
-  <div id="langbar">
-   <button class="lb" data-l="uk">УКР</button>
-   <button class="lb" data-l="ru">РУС</button>
-  </div>
+  <button id="bAdm" style="display:none">⚙</button>
   <div id="stamp"></div>
  </div>
 </div>
@@ -219,6 +213,7 @@ input,select{background:#111207;border:1px solid #4c4c3a;color:var(--b);font-fam
    <button data-t="srv" data-i="tabSrv"></button>
    <button data-t="shop" data-i="tabShop"></button>
    <button data-t="prof" data-i="tabProf"></button>
+   <button data-t="adm" id="tabAdmBtn" style="display:none" data-i="admTab"></button>
   </nav>
   <div class="tb on" id="tab-play">
    <p class="lore" data-i="lore"></p>
@@ -255,6 +250,9 @@ input,select{background:#111207;border:1px solid #4c4c3a;color:var(--b);font-fam
    <h3 data-i="profH"></h3>
    <div class="ps" id="pstats"></div>
   </div>
+  <div class="tb" id="tab-adm">
+   <div id="admTabBody"></div>
+  </div>
  </div>
 </div>
 
@@ -275,6 +273,23 @@ input,select{background:#111207;border:1px solid #4c4c3a;color:var(--b);font-fam
   <h3 data-i="mktMine"></h3>
   <div id="mkMine"></div>
   <button class="btn g big" id="bMkClose" style="margin-top:16px" data-i="mktClose"></button>
+ </div>
+</div>
+
+<div id="pinM" class="modal">
+ <div class="card" style="max-width:320px">
+  <h2 data-i="admPinT"></h2>
+  <input id="pinIn" type="password" maxlength="8" inputmode="numeric" autocomplete="off">
+  <button class="btn big" id="pinOk" style="margin-top:10px" data-i="admPinOk"></button>
+  <div id="pinMsg" style="font-size:12px;color:#b06b3a;margin-top:8px"></div>
+ </div>
+</div>
+
+<div id="admM" class="modal">
+ <div class="card" style="max-width:500px">
+  <h2 data-i="admT"></h2>
+  <div id="admBody"></div>
+  <button class="btn g big" id="bAdmClose" style="margin-top:16px" data-i="admClose"></button>
  </div>
 </div>
 
@@ -302,10 +317,8 @@ function LSget(k){if(!STORE)return null;try{return localStorage.getItem(k)}catch
 function LSset(k,v){if(!STORE)return;try{localStorage.setItem(k,v)}catch(e){}}
 function LSrm(k){if(!STORE)return;try{localStorage.removeItem(k)}catch(e){}}
 
-/* ===== мови: УКРАЇНСЬКА (за замовчуванням) + РОСІЙСЬКА ===== */
-var LANG='uk';
-try{var _l=LSget('d17lang');if(_l==='ru')LANG='ru'}catch(e){}
-var LU={
+/* ===== рядки (українська) ===== */
+var L={
 title:'ДИГГЕР 3D // Бомбосховище №17',sub:'/ вилазка через вентшахту',stamp:'СЕКРЕТНО',brand:'БОМБОСХОВИЩЕ',
 loginSub:'Обліковка зберігається локально в цьому браузері. Без серверів.',
 namePh:'позивний (2+ симв.)',passPh:'пароль (3+ симв.)',login:'УВІЙТИ',reg:'СТВОРИТИ ОБЛІКОВКУ',guest:'ГОСТЕМ (без збереження)',
@@ -343,62 +356,29 @@ mktListH:'ЛОТИ',mktNew:'ВИСТАВИТИ МАСКУ',mktMine:'МОЇ ЛО�
 mktSold:function(n,p){return'Продано «'+n+'» за '+p+'◉'},mktBought:function(n){return'Куплено: '+n},
 noCoins:'Монет не вистачає.',denied:'Лот уже пішов.',needItem:'Обери маску і ціну.',needRoom:'Барахолка працює лише на сервері.',mktClose:'ЗАКРИТИ',
 lostHost:'Хост пішов — продовжуєш офлайн.',playersN:function(n){return n+' у мережі'},hostTag:'[хост]',mmSurf:'ПОВЕРХНЯ — шукай будку',
-storeWarn:'⚠ Браузер блокує збереження даних — грати можна, але обліковка не збережеться між запусками.'
+storeWarn:'⚠ Браузер блокує збереження даних — грати можна, але обліковка не збережеться між запусками.',
+admTab:'АДМІН',admPinT:'ПІН‑КОД',admPinOk:'OK',admPinBad:'Невірний пін.',admOn:'⚡ АДМІН розблоковано!',
+admT:'АДМІН‑ПАНЕЛЬ',admClose:'ЗАКРИТИ',admToolsH:'ІНСТРУМЕНТИ',
+admCoins:'+1000 МОНЕТ',admAllSkins:'ВИДАТИ ВСІ СКІНИ',admSkinsT:'Усі скіни видано.',
+admGiveH:'ДАТИ МАСКИ',admGiveBtn:'ДАТИ',admRand:'випадкові',
+admMkInv:function(n){return'+'+n+' масок у рюкзак'},admMkWr:function(n){return'+'+n+' масок на склад'},
+admGod:'∞ ЛІХТАРИК',admSpd:'ШВИДКІСТЬ ×2',admFrz:'ТАЙМЕР НА ПАУЗІ',admMap:'ВІДКРИТИ КАРТУ',admMapT:'Карта відкрита.',
+admTPv:'ТЕЛЕПОРТ: БУДКА',admTPl:'ТЕЛЕПОРТ: ВЕНТШАХТА',admNoGame:'Спочатку почни вилазку.',
+admAlOn:'ТЕСТ СИГНАЛІЗАЦІЇ',admAlOff:'ВИМК СИГНАЛІЗАЦІЮ',admWin:'ЗАВЕРШИТИ ВИГРАШЕМ',
+admReset:'СКИНУТИ СТАТИСТИКУ',admKick:'КИКНУТИ',on:'УВІМК',off:'ВИМК'
 };
-var LR={
-title:'ДИГГЕР 3D // Бомбоубежище №17',sub:'/ вылазка через вентшахту',stamp:'СЕКРЕТНО',brand:'БОМБОУБЕЖИЩЕ',
-loginSub:'Учётка хранится локально в этом браузере. Без серверов.',
-namePh:'позывной (2+ симв.)',passPh:'пароль (3+ симв.)',login:'ВОЙТИ',reg:'СОЗДАТЬ УЧЁТКУ',guest:'ГОСТЕМ (без сохранения)',
-shortCreds:'Позывной — 2+ символов, пароль — 3+.',taken:'Такой позывной уже занят.',badLogin:'Нет такого позывного или пароль не тот.',regOk:'Учётка создана. Добро пожаловать в №17.',
-tabPlay:'ВЫЛАЗКА',tabSrv:'СЕРВЕРЫ',tabShop:'МАГАЗИН',tabProf:'ПРОФИЛЬ',
-lore:'Вечер, лес, старая ГО‑будка с вентиляционной решёткой сверху — как на фото. Найди её, вскрой решётку и спустись в бункер №17. Противогазы — только в ящиках: в каждом 10 штук, целые или гнилые. При вскрытии есть 20% шанс сигнализации: таймер из ∞ становится 3:00, и уйти можно только через ту же вентшахту, пока ГБР не взяла тебя.',
-hints:'ПК: WASD + мышь, E — действие, SPACE — прыжок, SHIFT — бег, F — фонарь, M — барахолка, Enter — чат.<br>Телефон: левая половина — джойстик, правая — поворот камеры (палец можно ставить где угодно, даже на кнопки — свайп их не нажмёт). Кнопки срабатывают только на короткий тап.',
-btnSolo:'СОЛО‑ВЫЛАЗКА ▾',soundLbl:'звук',logout:'выйти',
-srvHost:'ПОДНЯТЬ СЕРВЕР (до 15 диггеров)',srvNamePh:'название сервера',hiddenLbl:'скрытый сервер — не виден в списке, вход только по коду',
-btnHost:'СОЗДАТЬ ▾',btnQuick:'БЫСТРАЯ ИГРА ▾',joinH:'ВОЙТИ ПО КОДУ',codePh:'код сервера',btnJoin:'ВОЙТИ',
-listH:'ПУБЛИЧНЫЕ СЕРВЕРЫ',refresh:'⟳ ОБНОВИТЬ',srvEmpty:'эфир пуст — подними первый сервер',srvLoad:'сканирую эфир...',
-conn:'Подключаюсь...',full:'Сервер заполнен (15/15).',fail:'Не подключилось. Проверь код и интернет.',needCode:'Введи код сервера.',
-hostHid:'Сервер поднят (скрытый). Код: ',hostPub:'Сервер поднят! Код: ',
-shopBuy:'СКИНЫ ПРОТИВОГАЗОВ — КУПИТЬ',shopWare:'СКЛАД: НАДЕТЬ / ПРОДАТЬ',sellAll:'ПРОДАТЬ ВСЕ МАСКИ ▾',
-owned:'КУПЛЕНО',buy:'КУПИТЬ',wear:'НАДЕТЬ',unwear:'СНЯТЬ',sell:'ПРОДАТЬ',worn:'надето',coins:'монет',empty:'пусто',rotten:'☠ гнилой',
-profH:'СТАТИСТИКА',
-stR:'Вылазок',stE:'Ушёл через вентшахту',stC:'Забрала ГБР',stD:'Сгинул в темноте',stM:'Масок найдено',stCo:'Монет',stW:'На складе',stEq:'Надето',
-noEng:'3D‑движок не загрузился — нужен интернет. Перезагрузи страницу.',noNet:'Сеть не загрузилась — мультиплеер недоступен, соло работает.',
-hBat:'ФОНАРЬ / ЗАРЯД',hTimer:'ТАЙМЕР (∞ → тревога)',hScore:'СЧЁТ / МОНЕТЫ',hMap:'КАРТА',hBag:'РЮКЗАК',hPlayers:'В СЕТИ',hChat:'ЧАТ',hLeg:'ОБОЗНАЧЕНИЯ',
-legCrate:'🧰 ящик = 10 противогазов',legAid:'🩹 аптечка',legAi2:'💊 АИ‑2',legBatt:'🔋 батарейка',legVent:'🪜 вентшахта (вход/выход)',
-chatPh:'сообщение...',aidN:'Аптечка',ai2N:'АИ‑2',
-ipGrate:'открыть решётку вентшахты',ipDown:'спуститься в бункер',ipUp:'вылезти через вентшахту',ipCrate:'вскрыть ящик с противогазами',
-tStart:'Ищи бетонную будку с решёткой.',tGrate:'Решётка поддалась. Люк открыт.',tDown:'Бункер №17. Таймер ∞ — пока не завыла сигнализация.',
-tCrate:function(g,b){return'Ящик: +10 масок — '+g+' целых, '+b+' гнилых'},
-tAid:'Аптечка (+10).',tAi2:'АИ‑2 (+20)!',tBatt:'🔋 Батарейка: +45% к фонарю.',
-alarm:'⚠ СИГНАЛИЗАЦИЯ! ГБР выехала — 3:00, выход только через вентшахту!',alarm60:'Минута до ГБР!',alarm10:'10 секунд!! БЕГИ!',
-winT:'УШЁЛ ПО ВЕНТШАХТЕ',caughtT:'ЗАБРАЛА ГБР',darkT:'ФОНАРЬ ПОГАС...',abT:'ВЫЛАЗКА БРОШЕНА',
-winP:'Выбрался наружу по скобам, копы остались внизу глотать пыль. Хабар — на складе.',
-caughtP:'Таймер вышел. Фонари ГБР шарили по коридорам, пока не нашли тебя. Хабар конфискован.',
-darkP:'Заряд кончился в кромешной темноте. Вылазка окончена.',abP:'Ты бросил вылазку — всё найденное осталось внизу.',
-resG:'Целых масок',resB:'Гнилых масок',resS:'Счёт',resBonus:'Бонус монет',resBank:'Масок на склад',resLost:'Хабар потерян',btnMenu:'В МЕНЮ',
-pause:'ПАУЗА',resume:'ПРОДОЛЖИТЬ ▾',mktBtn:'БАРАХОЛКА',abandon:'БРОСИТЬ ВЫЛАЗКУ',sure:'ТОЧНО БРОСИТЬ?!',
-mktT:'БАРАХОЛКА ИГРОКОВ',mktNote:'P2P без сервера: анти‑чита нет, всё на честном слове.',
-mktListH:'ЛОТЫ',mktNew:'ВЫСТАВИТЬ МАСКУ',mktMine:'МОИ ЛОТЫ',mktListBtn:'ВЫСТАВИТЬ',mktCancel:'СНЯТЬ',mktBuy:'КУПИТЬ',mktNone:'лотов пока нет',pricePh:'цена',
-mktSold:function(n,p){return'Продано «'+n+'» за '+p+'◉'},mktBought:function(n){return'Куплено: '+n},
-noCoins:'Монет не хватает.',denied:'Лот уже ушёл.',needItem:'Выбери маску и цену.',needRoom:'Барахолка работает только на сервере.',mktClose:'ЗАКРЫТЬ',
-lostHost:'Хост ушёл — продолжаешь офлайн.',playersN:function(n){return n+' в сети'},hostTag:'[хост]',mmSurf:'ПОВЕРХНОСТЬ — ищи будку',
-storeWarn:'⚠ Браузер блокирует сохранение данных — играть можно, но аккаунт не сохранится между запусками.'
-};
-var L=LANG==='ru'?LR:LU;
 
 /* ===== дані ===== */
 var MT=[{id:'gp5',n:'ГП‑5',c:0x5a5f45,v:15},{id:'pmg',n:'ПМГ‑2',c:0x3a4a3c,v:25},{id:'shm',n:'ШМ‑41М',c:0x50505c,v:40},{id:'rsh',n:'РШ‑4',c:0x3c4260,v:60},{id:'gp7',n:'ГП‑7',c:0x2f5040,v:90}];
 var MW=[42,27,17,10,4];
-var SK=[{id:'gold',c:0xd8a825,p:300,ru:'Золотой ГП‑7',uk:'Золотий ГП‑7'},
-{id:'black',c:0x14161a,p:150,ru:'Чёрный ПМГ',uk:'Чорний ПМГ'},
-{id:'chrome',c:0xb9bdc6,p:250,ru:'Хром ШМ‑41',uk:'Хром ШМ‑41'},
-{id:'camo',c:0x4a5a35,p:200,ru:'Камуфляж РШ‑4',uk:'Камуфляж РШ‑4'},
-{id:'flame',c:0x8a2a12,p:400,ru:'Пламенный ГП‑5',uk:"Полум'яний ГП‑5"}];
-function skName(s){return LANG==='ru'?s.ru:s.uk}
+var SK=[{id:'gold',n:'Золотий ГП‑7',c:0xd8a825,p:300},
+{id:'black',n:'Чорний ПМГ',c:0x14161a,p:150},
+{id:'chrome',n:'Хром ШМ‑41',c:0xb9bdc6,p:250},
+{id:'camo',n:'Камуфляж РШ‑4',c:0x4a5a35,p:200},
+{id:'flame',n:"Полум'яний ГП‑5",c:0x8a2a12,p:400}];
 function mtById(id){for(var i=0;i<MT.length;i++)if(MT[i].id===id)return MT[i];return MT[0]}
 function skById(id){for(var i=0;i<SK.length;i++)if(SK[i].id===id)return SK[i];return SK[0]}
-function wLbl(w){if(w.kind==='gas')return mtById(w.typeId).n+(w.rot?' '+L.rotten:'');return skName(skById(w.skinId))}
+function wLbl(w){if(w.kind==='gas')return mtById(w.typeId).n+(w.rot?' '+L.rotten:'');return skById(w.skinId).n}
 function wIco(w){return w.kind==='gas'?(w.rot?'☠':'🎭'):'✨'}
 function sellV(w){if(w.kind==='skin')return Math.round(skById(w.skinId).p*0.4);var t=mtById(w.typeId);return w.rot?Math.max(1,Math.round(t.v*0.25)):t.v}
 
@@ -832,7 +812,8 @@ function drawRem(dt){
   r.g.visible=vis;if(!vis)continue;
   r.pos.lerp(r.tg,k);r.cy+=(r.ty-r.cy)*k;
   r.g.position.set(r.pos.x,r.cy,r.pos.z);
-  var dy=r.tyaw-r.yaw;dy=Math.atan2(Math.sin(dy),Math.cos(dy));r.yaw+=dy*k;r.g.rotation.y=r.yaw;
+  var dy=r.tyaw-r.yaw;dy=Math.atan2(Math.sin(dy),Math.cos(dy));r.yaw+=dy*k;
+  r.g.rotation.y=r.yaw+Math.PI;
   r.ph+=(r.spd||0)*dt*2.4;
   var amp=Math.min(1,(r.spd||0)/3)*.75,sw=Math.sin(r.ph)*amp;
   r.lL.rotation.x=sw;r.lR.rotation.x=-sw;r.aL.rotation.x=-sw*.8;r.aR.rotation.x=sw*.8;
@@ -1102,6 +1083,92 @@ function mktClose(){
  if(started&&run&&!over){paused=false;if(!isT){try{cv.requestPointerLock()}catch(e){}}}
 }
 
+/* ===== АДМІН (пін 1679: набери на клавіатурі / надішли в чат / тапни штамп) ===== */
+var ADMIN=false,pinBuf='',godBat=false,admSpd=false,frzT=false;
+function showAdmTab(){
+ if(!ADMIN)return;
+ document.querySelectorAll('.tabs button').forEach(function(x){x.classList.toggle('on',x.id==='tabAdmBtn')});
+ document.querySelectorAll('.tb').forEach(function(x){x.classList.toggle('on',x.id==='tab-adm')});
+ drawAdm('admTabBody');
+}
+function admUnlock(){
+ if(ADMIN)return;
+ ADMIN=true;
+ $('bAdm').style.display='inline-block';
+ $('tabAdmBtn').style.display='block';
+ toast(L.admOn);
+ if(started&&run&&!over)openAdm();
+ else showAdmTab();
+}
+function openAdm(){
+ if(!ADMIN)return;
+ $('admM').classList.add('show');
+ $('pov').classList.remove('show');
+ drawAdm('admBody');
+ if(started&&run&&!over)paused=true;
+}
+function admClose(){
+ $('admM').classList.remove('show');
+ if(started&&run&&!over){paused=false;if(!isT){try{cv.requestPointerLock()}catch(e){}}}
+}
+function admTP(w){
+ if(!(started&&run&&!over)){toast(L.admNoGame);return}
+ if(w==='vent'){zset(ZS);PL.x=VENT.x+2;PL.z=VENT.z+2}
+ else{zset(ZB);PL.x=lad.x;PL.z=lad.z}
+ PL.y=0;VY=0;markEx();drawMM();
+}
+function drawAdm(dst){
+ dst=dst||'admBody';
+ var B=$(dst),q=function(s){return B.querySelector(s)};
+ var h='';
+ h+='<div class="row" style="margin-top:0"><button class="btn" style="margin-top:0" id="aCoins">'+L.admCoins+'</button><button class="btn g" style="margin-top:0" id="aSkins">'+L.admAllSkins+'</button></div>';
+ h+='<h3>'+L.admGiveH+'</h3><div class="jr"><select id="admSel" style="flex:1;min-width:110px">'+MT.map(function(t){return'<option value="'+t.id+'">'+t.n+'</option>'}).join('')+'<option value="all">'+L.admRand+'</option></select><input id="admQty" type="number" min="1" value="10" style="width:70px"><button class="btn" style="margin-top:0" id="aGive">'+L.admGiveBtn+'</button></div>';
+ h+='<h3>'+L.admToolsH+'</h3>';
+ h+='<div class="row" style="margin-top:0"><button class="btn g" style="margin-top:0" id="aGod">'+L.admGod+': '+(godBat?L.on:L.off)+'</button><button class="btn g" style="margin-top:0" id="aSpd">'+L.admSpd+': '+(admSpd?L.on:L.off)+'</button><button class="btn g" style="margin-top:0" id="aFrz">'+L.admFrz+': '+(frzT?L.on:L.off)+'</button></div>';
+ h+='<div class="row" style="margin-top:10px"><button class="btn g" style="margin-top:0" id="aMap">'+L.admMap+'</button><button class="btn g" style="margin-top:0" id="aTPv">'+L.admTPv+'</button><button class="btn g" style="margin-top:0" id="aTPl">'+L.admTPl+'</button></div>';
+ h+='<div class="row" style="margin-top:10px"><button class="btn g" style="margin-top:0" id="aAlOn">'+L.admAlOn+'</button><button class="btn g" style="margin-top:0" id="aAlOff">'+L.admAlOff+'</button><button class="btn g" style="margin-top:0" id="aWin">'+L.admWin+'</button><button class="btn g" style="margin-top:0" id="aReset">'+L.admReset+'</button></div>';
+ if(NET.host){
+  var ks=[];for(var p in NET.cs)ks.push(p);
+  if(ks.length){
+   h+='<h3>'+L.hPlayers+'</h3>';
+   ks.forEach(function(p){
+    var nm=(NET.cs[p].meta&&NET.cs[p].meta.name)||p;
+    h+='<div class="mr"><span class="nm">'+esc(nm)+'</span><button class="mini" data-k="'+p+'">'+L.admKick+'</button></div>';
+   });
+  }
+ }
+ B.innerHTML=h;
+ q('#aCoins').onclick=function(){PROF.coins+=1000;saveP();renderShop();renderProf();bars()};
+ q('#aSkins').onclick=function(){
+  SK.forEach(function(s){if(!PROF.ware.some(function(w){return w.kind==='skin'&&w.skinId===s.id}))PROF.ware.push({uid:uid(),kind:'skin',skinId:s.id})});
+  saveP();renderShop();toast(L.admSkinsT);
+ };
+ q('#aGive').onclick=function(){
+  var t=q('#admSel').value,n=cl(parseInt(q('#admQty').value,10)||10,1,500);
+  if(started&&run&&!over){
+   for(var i=0;i<n;i++){var ty=t==='all'?MT[wpick(MW)]:mtById(t);inv.push({kind:'gas',typeId:ty.id,rot:false,uid:uid()});sc+=15}
+   drawInv();bars();toast(L.admMkInv(n));
+  }else{
+   for(var j=0;j<n;j++){var ty2=t==='all'?MT[wpick(MW)]:mtById(t);PROF.ware.push({kind:'gas',typeId:ty2.id,rot:false,uid:uid()})}
+   saveP();renderShop();renderProf();toast(L.admMkWr(n));
+  }
+ };
+ q('#aGod').onclick=function(){godBat=!godBat;drawAdm(dst)};
+ q('#aSpd').onclick=function(){admSpd=!admSpd;drawAdm(dst)};
+ q('#aFrz').onclick=function(){frzT=!frzT;drawAdm(dst)};
+ q('#aMap').onclick=function(){
+  if(started&&exp){for(var y=0;y<H;y++)for(var x=0;x<W;x++)exp[y][x]=true;drawMM();toast(L.admMapT)}
+  else toast(L.admNoGame);
+ };
+ q('#aTPv').onclick=function(){admTP('vent')};
+ q('#aTPl').onclick=function(){admTP('lad')};
+ q('#aAlOn').onclick=function(){if(started&&run&&!over)alarmOn(180);else toast(L.admNoGame)};
+ q('#aAlOff').onclick=function(){alarm=false;rtime=Infinity;w60=w10=false;sirOff();stg.classList.remove('raid');bars()};
+ q('#aWin').onclick=function(){if(started&&run&&!over){admClose();endRun('escape')}else toast(L.admNoGame)};
+ q('#aReset').onclick=function(){PROF.stats=nStats();saveP();renderProf()};
+ B.querySelectorAll('[data-k]').forEach(function(b){b.onclick=function(){var c=NET.cs[b.dataset.k];if(c){try{c.close()}catch(e){}}}});
+}
+
 /* ===== ігрові дії ===== */
 function toast(m){var t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toast._h);toast._h=setTimeout(function(){t.classList.remove('show')},2400)}
 function fade(cb){var f=$('fader');f.style.opacity='1';setTimeout(function(){cb();setTimeout(function(){f.style.opacity='0'},150)},480)}
@@ -1113,7 +1180,7 @@ function wornC(){
  if(w.kind==='gas')return w.rot?null:{t:'g',id:w.typeId};
  return{t:'s',id:w.skinId};
 }
-function wornL(){if(!worn)return null;if(worn.t==='g')return mtById(worn.id).n;return skName(skById(worn.id))}
+function wornL(){if(!worn)return null;if(worn.t==='g')return mtById(worn.id).n;return skById(worn.id).n}
 function openGrate(){if(grateO)return;grateO=true;grateT=1.5;sfxC();toast(L.tGrate);send({type:'grate'});scan()}
 function goDown(){fade(function(){zset(ZB);PL.x=lad.x;PL.z=lad.z;PL.y=0;VY=0;markEx();toast(L.tDown)})}
 function goUp(){fade(function(){zset(ZS);PL.x=VENT.x+2;PL.z=VENT.z+2;PL.y=0;VY=0;endRun('escape')})}
@@ -1248,7 +1315,7 @@ function renderShop(){
  var g=$('skinGrid');
  g.innerHTML=SK.map(function(s){
   var own=PROF.ware.some(function(w){return w.kind==='skin'&&w.skinId===s.id});
-  return'<div class="sk"><div class="sw" style="background:#'+('00000'+s.c.toString(16)).slice(-6)+'"></div><div>'+esc(skName(s))+'</div><div class="pr">◉ '+s.p+'</div><button class="mini" data-sk="'+s.id+'"'+(own?' disabled':'')+'>'+(own?L.owned:(PROF.coins>=s.p?L.buy:'—'))+'</button></div>';
+  return'<div class="sk"><div class="sw" style="background:#'+('00000'+s.c.toString(16)).slice(-6)+'"></div><div>'+esc(s.n)+'</div><div class="pr">◉ '+s.p+'</div><button class="mini" data-sk="'+s.id+'"'+(own?' disabled':'')+'>'+(own?L.owned:(PROF.coins>=s.p?L.buy:'—'))+'</button></div>';
  }).join('');
  g.querySelectorAll('[data-sk]').forEach(function(b){b.onclick=function(){buySkin(b.dataset.sk)}});
  var l=$('wareList');
@@ -1376,6 +1443,7 @@ var BTN={
 };
 function sendChat(){
  var v=chatEl.value.trim();
+ if(v==='1679'){chatEl.value='';chatEl.blur();chatF=false;admUnlock();return}
  if(v){chatL.push({name:pname,text:v,me:true});drawChat();send({type:'chat',text:v,name:pname})}
  chatEl.value='';chatEl.blur();chatF=false;
  if(!isT&&started&&run&&!paused&&!mktOpen()&&!over){try{cv.requestPointerLock()}catch(e){}}
@@ -1385,12 +1453,18 @@ window.addEventListener('keydown',function(e){
  if(document.activeElement===chatEl){if(e.key==='Enter'){e.preventDefault();sendChat()}return}
  if(typing)return;
  keys[e.code]=1;
+ if(e.key&&e.key.length===1&&e.key>='0'&&e.key<='9'){pinBuf=(pinBuf+e.key).slice(-4);if(pinBuf==='1679')admUnlock()}
  if(e.code==='Space')e.preventDefault();
  if(e.code==='KeyE'&&started&&run&&!paused&&!over)doInt();
  if(e.code==='KeyM'&&started&&run){mktOpen()?mktClose():openMkt()}
  if(e.code==='KeyF'&&started)torch=!torch;
  if(e.code==='Enter'&&started&&run&&!paused&&!isT&&!mktOpen()&&!over){e.preventDefault();chatF=true;unlock();chatEl.focus()}
- if(e.key==='Escape'){if(mktOpen())mktClose();else if(started&&run)paused?resume():showP()}
+ if(e.key==='Escape'){
+  if($('admM').classList.contains('show'))admClose();
+  else if($('pinM').classList.contains('show')){$('pinM').classList.remove('show')}
+  else if(mktOpen())mktClose();
+  else if(started&&run)paused?resume():showP();
+ }
 });
 window.addEventListener('keyup',function(e){delete keys[e.code]});
 window.addEventListener('blur',function(){keys={}});
@@ -1412,7 +1486,7 @@ document.addEventListener('pointerlockchange',function(){
  if(document.pointerLockElement!==cv&&started&&run&&!paused&&!chatF&&!mktOpen()&&!$('endO').classList.contains('show')&&!over)showP();
 });
 stg.addEventListener('contextmenu',function(e){e.preventDefault()});
-/* ДРАГ = поворот камери (навіть якщо палець почав на кнопці), ТАП = кнопка */
+/* ДРАГ = поворот камери (навіть з кнопки), ТАП = кнопка */
 stg.addEventListener('touchstart',function(e){
  if(e.target.closest('#pov'))return;
  var rc=stg.getBoundingClientRect();
@@ -1494,7 +1568,7 @@ function update(dt){
  var ml=Math.hypot(f,s);
  if(ml>1){f/=ml;s/=ml}
  var spr2=(keys.ShiftLeft||keys.ShiftRight||spr)&&ml>.01;
- var bs=zone===ZS?4.2:3.4,sp=bs*(spr2?1.55:1)*(zone===ZB&&bat<15?.8:1);
+ var bs=zone===ZS?4.2:3.4,sp=bs*(admSpd?2:1)*(spr2?1.55:1)*(zone===ZB&&bat<15&&!godBat?.8:1);
  var yaw=YO.rotation.y;
  var tx=(-Math.sin(yaw)*f+Math.cos(yaw)*s)*sp;
  var tz=(-Math.cos(yaw)*f-Math.sin(yaw)*s)*sp;
@@ -1513,10 +1587,13 @@ function update(dt){
  if(VM){VM.position.y=Math.sin(bob)*.012*Math.min(1,hs/3);VM.position.x=Math.cos(bob*.5)*.008}
  var wf=(spr2&&hs>2)?78:72;
  if(Math.abs(CM.fov-wf)>.2){CM.fov+=(wf-CM.fov)*Math.min(1,6*dt);CM.updateProjectionMatrix()}
- if(zone===ZB){bat-=dt*((spr2&&hs>2)?.5:.28)*(torch?1:.15);if(bat<=0){bat=0;endRun('dark');return}}
+ if(zone===ZB){
+  if(godBat)bat=100;
+  else{bat-=dt*((spr2&&hs>2)?.5:.28)*(torch?1:.15);if(bat<=0){bat=0;endRun('dark');return}}
+ }
  FL.intensity=torch?(.35+1.25*Math.max(0,bat)/100):0;
  FL.distance=bat>55?12:bat>28?9.5:bat>10?7:5;
- if(alarm){
+ if(alarm&&!frzT){
   rtime-=dt;
   if(!w60&&rtime<=60){w60=true;toast(L.alarm60)}
   if(!w10&&rtime<=10){w10=true;toast(L.alarm10)}
@@ -1571,22 +1648,16 @@ function applyL(){
  document.title=L.title;
  $('sub').textContent=L.sub;
  $('stamp').textContent=L.stamp;
- document.querySelectorAll('.lb').forEach(function(b){b.classList.toggle('on',b.dataset.l===LANG)});
  drawInv();drawEq();drawPl();drawSrv();
  if(!started)drawMM();
 }
-function setLang(l){
- LANG=l;L=l==='ru'?LR:LU;LSset('d17lang',l);
- applyL();
- if(PROF){renderShop();renderProf()}
-}
-document.querySelectorAll('.lb').forEach(function(b){b.onclick=function(){setLang(b.dataset.l)}});
 document.querySelectorAll('.tabs button').forEach(function(b){b.onclick=function(){
  document.querySelectorAll('.tabs button').forEach(function(x){x.classList.toggle('on',x===b)});
  document.querySelectorAll('.tb').forEach(function(x){x.classList.toggle('on',x.id==='tab-'+b.dataset.t)});
  if(b.dataset.t==='shop')renderShop();
  if(b.dataset.t==='prof')renderProf();
  if(b.dataset.t==='srv')refreshSrv();
+ if(b.dataset.t==='adm')drawAdm('admTabBody');
 }});
  $('bLogin').onclick=doLog;
  $('bReg').onclick=doReg;
@@ -1605,6 +1676,19 @@ document.querySelectorAll('.tabs button').forEach(function(b){b.onclick=function
  $('bHud').onclick=function(){$('hud').classList.toggle('open')};
  $('sndChk').checked=SET.sound;
  $('sndChk').addEventListener('change',function(){SET.sound=$('sndChk').checked;saveSet();if(!SET.sound)sirOff()});
+ $('stamp').onclick=function(){
+ if(ADMIN){if(started&&run&&!over)openAdm();else showAdmTab();return}
+ $('pinM').classList.add('show');
+ setTimeout(function(){try{$('pinIn').focus()}catch(e){}},50);
+};
+ $('pinOk').onclick=function(){
+ var v=$('pinIn').value.trim();
+ if(v==='1679'){$('pinM').classList.remove('show');$('pinIn').value='';$('pinMsg').textContent='';admUnlock()}
+ else{$('pinMsg').textContent=L.admPinBad;$('pinIn').value=''}
+};
+ $('pinIn').addEventListener('keydown',function(e){if(e.key==='Enter')$('pinOk').onclick()});
+ $('bAdm').onclick=openAdm;
+ $('bAdmClose').onclick=admClose;
 
 /* ===== запуск ===== */
 document.body.classList.toggle('touch',isT);
