@@ -522,7 +522,8 @@ var SK=[{id:'gold',n:'Золотий ГП‑7',c:0xd8a825,p:300},
 {id:'flame',n:"Полум'яний ГП‑5",c:0x8a2a12,p:400}];
 var SUITS=[{id:'bio',n:'БІО‑КОСТЮМ (з любою маскою)',c:0xb9a22a,p:500}];
 var FLshop=[{id:2,n:'ФОНАР СЕРЕДНІЙ',p:150},{id:3,n:'ФОНАР ВЕЛИКИЙ (далеко!)',p:400},{id:4,n:'ФОНАР СУПЕР‑ДУПЕР ☀',p:900}];
-var BAGshop=[{id:'l',n:'ВЕЛИКИЙ РЮКЗАК (4 слоти)',p:300}];
+var BAGshop=[{id:'l',n:'ВЕЛИКИЙ РЮКЗАК (59 слотів)',p:300},{id:'xl',n:'ГІГАНТСЬКИЙ РЮКЗАК (500 слотів)',p:2400}];
+var BAGCAP={s:16,l:59,xl:500},BAGRANK={s:0,l:1,xl:2};
 function mtById(id){for(var i=0;i<MT.length;i++)if(MT[i].id===id)return MT[i];return MT[0]}
 function maskPrice(t){return Math.max(25,Math.round(t.v*6.5))}
 function skById(id){for(var i=0;i<SK.length;i++)if(SK[i].id===id)return SK[i];return SK[0]}
