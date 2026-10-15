@@ -1879,6 +1879,7 @@ function drawAdm(dst){
  h+='<h3>'+L.admToolsH+'</h3>';
  h+='<div class="row" style="margin-top:0"><button class="btn g" style="margin-top:0" id="aGod">'+L.admGod+': '+(godBat?L.on:L.off)+'</button><button class="btn g" style="margin-top:0" id="aSpd">'+L.admSpd+': '+(admSpd?L.on:L.off)+'</button><button class="btn g" style="margin-top:0" id="aFrz">'+L.admFrz+': '+(frzT?L.on:L.off)+'</button></div>';
  h+='<div class="row" style="margin-top:10px"><button class="btn g" style="margin-top:0" id="aJackpot">ДЖЕКПОТ-БУНКЕР (наступний забіг): '+(forceJackpot?L.on:L.off)+'</button></div>';
+ h+='<div class="row" style="margin-top:10px"><button class="btn g" style="margin-top:0" id="aLootAll">ЗАГРАБУВАТИ ВЕСЬ БУНКЕР</button></div>';
  h+='<div class="row" style="margin-top:10px"><button class="btn g" style="margin-top:0" id="aMap">'+L.admMap+'</button><button class="btn g" style="margin-top:0" id="aTPv">'+L.admTPv+'</button><button class="btn g" style="margin-top:0" id="aTPl">'+L.admTPl+'</button></div>';
  h+='<div class="row" style="margin-top:10px"><button class="btn g" style="margin-top:0" id="aAlOn">'+L.admAlOn+'</button><button class="btn g" style="margin-top:0" id="aAlOff">'+L.admAlOff+'</button><button class="btn g" style="margin-top:0" id="aWin">'+L.admWin+'</button><button class="btn g" style="margin-top:0" id="aReset">'+L.admReset+'</button></div>';
  if(NET.host){
@@ -1912,6 +1913,7 @@ function drawAdm(dst){
  q('#aSpd').onclick=function(){admSpd=!admSpd;drawAdm(dst)};
  q('#aFrz').onclick=function(){frzT=!frzT;drawAdm(dst)};
  q('#aJackpot').onclick=function(){forceJackpot=!forceJackpot;toast(forceJackpot?'Наступний забіг буде джекпот-бункером!':'Джекпот вимкнено.');drawAdm(dst)};
+ q('#aLootAll').onclick=function(){lootAll()};
  q('#aMap').onclick=function(){
   if(started&&exp){for(var y=0;y<H;y++)for(var x=0;x<W;x++)exp[y][x]=true;drawMM();toast(L.admMapT)}
   else toast(L.admNoGame);
@@ -1976,6 +1978,32 @@ function pickIt(key){
  if(d.kind==='batt'){bat=Math.min(100,bat+45);toast(L.tBatt)}
  else{inv.push(d);sc+=d.pts;toast(d.kind==='aid'?L.tAid:d.kind==='choc'?L.tChoc:L.tAi2)}
  sfxB(660,990);send({type:'pick',key:key});drawInv();drawHearts();
+}
+function lootAll(){
+ if(!(started&&run&&!over)){toast('Спочатку почни забіг.');return}
+ var cCount=0,iCount=0;
+ crates.forEach(function(c){
+  if(c.open)return;
+  c.open=true;c.an=1;if(c.lp)c.lp.rotation.x=-1.85;
+  cCount++;
+  for(var i=0;i<10;i++){
+   var t=MT_D[wpick(MW_D)],rot=Math.random()<.45;
+   inv.push({kind:'gas',typeId:t.id,rot:rot,uid:uid()});
+   sc+=rot?5:15;
+  }
+  send({type:'crate',idx:c.idx});
+ });
+ for(var key in items){
+  var it=items[key];if(!it)continue;
+  var d=it.d;
+  SN.remove(it.s);delete items[key];picked[key]=1;
+  if(d.kind==='batt')bat=Math.min(100,bat+45);
+  else{inv.push(d);sc+=d.pts}
+  send({type:'pick',key:key});
+  iCount++;
+ }
+ sfxC();sfxB(660,990);drawInv();bars();drawHearts();scan();
+ toast('Розграбовано бункер: ящиків '+cCount+', предметів '+iCount);
 }
 function scan(){
  var best=null;
