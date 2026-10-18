@@ -757,11 +757,22 @@ function initProf(){
 
 var cv=$('cv'),stg=$('stage');
 var RD=null,SN=null,CM=null,YO=null,PO=null,AM=null,FL=null,VM=null;
+function mkRenderer(){
+ var opts1={canvas:cv,antialias:true,alpha:false,powerPreference:'default'};
+ try{return new THREE.WebGLRenderer(opts1)}catch(e1){}
+ try{return new THREE.WebGLRenderer({canvas:cv,antialias:false,alpha:false,powerPreference:'default',failIfMajorPerformanceCaveat:false})}catch(e2){}
+ var ctx=null;
+ try{ctx=cv.getContext('webgl',{antialias:false,failIfMajorPerformanceCaveat:false})||cv.getContext('experimental-webgl',{antialias:false,failIfMajorPerformanceCaveat:false})}catch(e3){ctx=null}
+ if(ctx){try{return new THREE.WebGLRenderer({canvas:cv,context:ctx,antialias:false})}catch(e4){}}
+ return null;
+}
 function init3(){
  if(RD)return true;
  if(!window.THREE)return false;
  try{
-  RD=new THREE.WebGLRenderer({canvas:cv,antialias:true});RD.setPixelRatio(Math.min(devicePixelRatio||1,gfx().px));
+  RD=mkRenderer();
+  if(!RD){if(window.__err)window.__err(L.no3d||'3D графіка недоступна на цьому пристрої/браузері (WebGL не підтримується або вимкнений). Спробуй інший браузер (Chrome/Firefox) чи інший пристрій.');return false}
+  RD.setPixelRatio(Math.min(devicePixelRatio||1,gfx().px));
   SN=new THREE.Scene();SN.background=new THREE.Color(0);SN.fog=new THREE.Fog(0x151c2a,25,gfx().s);
   CM=new THREE.PerspectiveCamera(SET.fov,1,0.1,300);
   PO=new THREE.Object3D();PO.add(CM);YO=new THREE.Object3D();YO.add(PO);SN.add(YO);
