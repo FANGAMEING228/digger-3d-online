@@ -205,6 +205,7 @@ input[type=color]{padding:2px;width:44px;height:34px;cursor:pointer}
    <h2 data-i="pause"></h2>
    <button class="btn" id="bRes" style="margin-top:0" data-i="resume"></button>
    <button class="btn g" id="bMkt" style="margin-top:0" data-i="mktBtn"></button>
+   <button class="btn g" id="bVR2" style="margin-top:0;display:none">🥽 УВІЙТИ В VR</button>
    <button class="btn g" id="bRec2" style="margin-top:0">⏺ ЗАПИС / СТОП</button>
    <button class="btn g" id="bAb" style="margin-top:0" data-i="abandon"></button>
   </div>
@@ -265,6 +266,7 @@ input[type=color]{padding:2px;width:44px;height:34px;cursor:pointer}
    <div class="hint" data-i="hints"></div>
    <label class="chk"><input type="checkbox" id="sndChk"><span data-i="soundLbl"></span></label>
    <button class="btn big" id="bSolo" style="margin-top:4px" data-i="btnSolo"></button>
+   <button class="btn g big" id="bVR" style="margin-top:4px;display:none">🥽 УВІЙТИ В VR</button>
   </div>
   <div class="tb" id="tab-srv">
    <h3 data-i="srvHost"></h3>
@@ -327,6 +329,9 @@ input[type=color]{padding:2px;width:44px;height:34px;cursor:pointer}
     <div class="chk" style="margin:0"><input type="color" id="colSuit"><span>костюм</span></div>
    </div>
    <div class="hint" style="margin-top:10px">Високий: далека видимість. Бульба: максимальна швидкість. Кольори одягу бачать усі гравці (і ти — в інвентарі/магазині).</div>
+   <h3>🥽 VR (Meta Quest)</h3>
+   <label class="chk"><input type="checkbox" id="vrChk"><span>Увімкнути VR-режим</span></label>
+   <div class="hint" id="vrHint" style="margin-top:6px">Відкрий цю сторінку в браузері шолома (Meta Quest Browser) за HTTPS-посиланням. Увімкни тут VR-режим — з'явиться кнопка «Увійти в VR» на вкладці ВИЛАЗКА та на паузі. Рух — лівий стик, поворот — правий стик, взаємодія — тригер.</div>
   </div>
   <div class="tb" id="tab-adm">
    <div id="admTabBody"></div>
@@ -701,7 +706,7 @@ function maskPic(it){
  return PIC[key];
 }
 
-var SET={sens:1,sound:true,inv:false,vol:.7,fov:72,gfx:'no'};
+var SET={sens:1,sound:true,inv:false,vol:.7,fov:72,gfx:'no',vr:false};
 try{var _s=JSON.parse(LSget('d17set')||'{}');for(var _k in _s)SET[_k]=_s[_k]}catch(e){}
 function saveSet(){LSset('d17set',JSON.stringify(SET))}
 var GFX={hi:{b:44,s:300,px:2},no:{b:26,s:170,px:1.5},lo:{b:18,s:120,px:1},po:{b:12,s:75,px:.6}};
@@ -773,6 +778,7 @@ function init3(){
   RD=mkRenderer();
   if(!RD){if(window.__err)window.__err(L.no3d||'3D графіка недоступна на цьому пристрої/браузері (WebGL не підтримується або вимкнений). Спробуй інший браузер (Chrome/Firefox) чи інший пристрій.');return false}
   RD.setPixelRatio(Math.min(devicePixelRatio||1,gfx().px));
+  try{RD.xr.enabled=true}catch(exr){}
   SN=new THREE.Scene();SN.background=new THREE.Color(0);SN.fog=new THREE.Fog(0x151c2a,25,gfx().s);
   CM=new THREE.PerspectiveCamera(SET.fov,1,0.1,300);
   PO=new THREE.Object3D();PO.add(CM);YO=new THREE.Object3D();YO.add(PO);SN.add(YO);
@@ -787,7 +793,9 @@ function init3(){
   var ha=new THREE.Mesh(new THREE.BoxGeometry(.11,.11,.16),new THREE.MeshStandardMaterial({color:0xd7a86e,roughness:.9}));
   ha.position.set(.26,-.31,-.33);
   VM.add(th);VM.add(hd);VM.add(ha);VM.userData.hd=hd;VM.userData.hand=ha;CM.add(VM);
-  resize();return true;
+  resize();
+  usingXRLoop=true;RD.setAnimationLoop(frame);
+  return true;
  }catch(e){RD=null;if(window.__err)window.__err('3D: '+(e&&e.message||e));return false}
 }
 function resize(){
@@ -796,6 +804,55 @@ function resize(){
  if(w&&h){RD.setSize(w,h,false);CM.aspect=w/h;CM.updateProjectionMatrix()}
 }
 window.addEventListener('resize',resize);
+function updVRBtn(){
+ var ok=!!(SET.vr&&navigator.xr);
+ var b1=$('bVR'),b2=$('bVR2');
+ if(b1)b1.style.display=ok?'block':'none';
+ if(b2)b2.style.display=(ok&&started)?'block':'none';
+}
+function vrInput(dt){
+ var out={f:0,s:0};
+ if(vrTurnLock>0)vrTurnLock=Math.max(0,vrTurnLock-dt);
+ if(vrFireLock>0)vrFireLock=Math.max(0,vrFireLock-dt);
+ if(vrMaskLock>0)vrMaskLock=Math.max(0,vrMaskLock-dt);
+ if(!vrSession)return out;
+ var srcs=vrSession.inputSources;
+ for(var i=0;i<srcs.length;i++){
+  var src=srcs[i];if(!src||!src.gamepad)continue;
+  var gp=src.gamepad,ax=gp.axes||[],bt=gp.buttons||[];
+  var sx=ax.length>=4?ax[2]:(ax[0]||0),sy=ax.length>=4?ax[3]:(ax[1]||0);
+  if(src.handedness==='left'){
+   if(Math.abs(sx)>.15)out.s+=sx;
+   if(Math.abs(sy)>.15)out.f+=-sy;
+  }else if(src.handedness==='right'){
+   if(vrTurnLock<=0&&Math.abs(sx)>.6){YO.rotation.y-=Math.sign(sx)*0.6;vrTurnLock=.35}
+  }
+  if(bt[0]&&bt[0].pressed&&vrFireLock<=0){vrFireLock=.4;doInt()}
+  if(bt[4]&&bt[4].pressed&&vrMaskLock<=0){vrMaskLock=.5;quickToggleMask()}
+ }
+ return out;
+}
+function onVREnd(){
+ vrActive=false;vrSession=null;
+ if(VM)VM.visible=true;
+ resize();
+ updVRBtn();
+}
+function enterVR(){
+ if(!navigator.xr){toast('Цей браузер не підтримує WebXR. Відкрий сторінку в Meta Quest Browser.');return}
+ if(!init3()){toast(L.noEng);warn2();return}
+ if(vrActive)return;
+ navigator.xr.isSessionSupported('immersive-vr').then(function(sup){
+  if(!sup){toast('Цей пристрій не підтримує VR.');return}
+  navigator.xr.requestSession('immersive-vr',{optionalFeatures:['local-floor','bounded-floor']}).then(function(session){
+   vrSession=session;vrActive=true;
+   if(VM)VM.visible=false;
+   RD.xr.setReferenceSpaceType('local-floor');
+   RD.xr.setSession(session).then(function(){updVRBtn()});
+   session.addEventListener('end',onVREnd);
+  }).catch(function(e){toast('Не вдалося увійти в VR: '+(e&&e.message||e))});
+ }).catch(function(e){toast('Помилка перевірки VR: '+(e&&e.message||e))});
+}
 
 var TX={};
 function mkT(fn){var c=document.createElement('canvas');c.width=c.height=256;fn(c.getContext('2d'));var t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;return t}
@@ -920,6 +977,7 @@ var bunkG=null,surfG=null,hemi=null,dl=null;
 var grateP=null,grateO=false,grateT=0;
 var alarm=false,rtime=Infinity,w60=false,w10=false;
 var torch=true,spr=false,bob=0,mmA=0,posA=0;
+var vrActive=false,vrSession=null,vrTurnLock=0,vrFireLock=0,vrMaskLock=0;
 var wseed=0,cint=null,lad={x:0,z:0},goodLight=true,vault=null,jackpot=false,forceJackpot=false,JROOMS=[];
 var rem={},chatL=[],rost=[],mkMap={},escr={},worn=null,wornSuit=null,pname='Digger',picked={};
 
@@ -2382,6 +2440,7 @@ function renderProf(){
 function endRun(why){
  if(over)return;
  run=false;over=true;cint=null;sirOff();paused=false;
+ if(vrSession){try{vrSession.end()}catch(evr){}}
  $('pov').classList.remove('show');$('mktM').classList.remove('show');$('invM').classList.remove('show');drawIP();unlock();
  var m=inv.filter(function(i){return i.kind==='gas'});
  var gg=0;for(var i=0;i<m.length;i++)if(!m[i].rot)gg++;
@@ -2408,7 +2467,7 @@ function endRun(why){
  $('bToMenu').onclick=toMenu;
 }
 function toMenu(){
- run=false;started=false;over=false;paused=false;
+ run=false;started=false;over=false;paused=false;updVRBtn();
  sirOff();
  stg.classList.remove('raid','low');
  $('endO').classList.remove('show');$('mktM').classList.remove('show');$('pov').classList.remove('show');$('invM').classList.remove('show');
@@ -2437,7 +2496,7 @@ function startGame(mode,init){
   else inv.push({kind:'gas',typeId:worn.id,rot:false,uid:uid()});
  }
  hearts=3;heartT=0;chocT=0;chocActive=false;
- over=false;run=true;started=true;paused=false;chatF=false;
+ over=false;run=true;started=true;paused=false;chatF=false;updVRBtn();
  VX=VZ=0;VY=0;PL.y=0;torch=true;spr=false;$('bSprint').classList.remove('on');
  $('chocBar').style.display='none';
  $('maskView').style.backgroundImage='url('+maskViewTex()+')';
@@ -2447,7 +2506,7 @@ function startGame(mode,init){
  rost=[{id:NET.id||'me',name:pname}];
  zset(ZS);
  PL.x=0;PL.z=10;
- YO.position.set(PL.x,EYE,PL.z);YO.rotation.y=0;PO.rotation.x=0;
+ YO.position.set(PL.x,vrActive?0:EYE,PL.z);YO.rotation.y=0;PO.rotation.x=0;
  if(VM&&VM.userData.head)VM.userData.head.material.emissiveIntensity=0.7;
  chatL=[];drawChat();
  if(init){
@@ -2518,7 +2577,7 @@ window.addEventListener('keyup',function(e){delete keys[e.code]});
 window.addEventListener('blur',function(){keys={}});
 chatEl.addEventListener('blur',function(){chatF=false});
 document.addEventListener('mousemove',function(e){
- if(document.pointerLockElement===cv&&run&&!paused&&!over){
+ if(document.pointerLockElement===cv&&run&&!paused&&!over&&!vrActive){
   YO.rotation.y-=e.movementX*SENS*SET.sens;
   PO.rotation.x-=e.movementY*SENS*SET.sens*(SET.inv?-1:1);
   PO.rotation.x=cl(PO.rotation.x,-1.45,1.45);
@@ -2570,7 +2629,7 @@ stg.addEventListener('touchmove',function(e){
   }else if(lt&&t.identifier===lt.id){
    var dx2=t.clientX-lt.x,dy2=t.clientY-lt.y;
    lt.x=t.clientX;lt.y=t.clientY;
-   if(run&&!paused&&!over){
+   if(run&&!paused&&!over&&!vrActive){
     YO.rotation.y-=dx2*TSENS*SET.sens;
     PO.rotation.x-=dy2*TSENS*SET.sens*(SET.inv?-1:1);
     PO.rotation.x=cl(PO.rotation.x,-1.45,1.45);
@@ -2611,6 +2670,7 @@ function update(dt){
   s=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0);
  }
  if(joy.on){f+=-joy.y;s+=joy.x}
+ if(vrActive){var vrm=vrInput(dt);f+=vrm.f;s+=vrm.s}
  var ml=Math.hypot(f,s);
  if(ml>1){f/=ml;s/=ml}
  var spr2=(keys.ShiftLeft||keys.ShiftRight||spr)&&ml>.01;
@@ -2630,7 +2690,7 @@ function update(dt){
  var hs=Math.hypot(VX,VZ);
  if(PL.y<=.001&&hs>.3)bob+=hs*dt*2.2;
  var bb=Math.sin(bob)*.05*Math.min(1,hs/3);
- YO.position.set(PL.x,EYE+PL.y+bb,PL.z);
+ YO.position.set(PL.x,(vrActive?0:EYE)+PL.y+bb,PL.z);
  if(VM){VM.position.y=Math.sin(bob)*.012*Math.min(1,hs/3);VM.position.x=Math.cos(bob*.5)*.008;
   if(VM.userData.hand)VM.userData.hand.material.color.setHex(wornSuit?(PROF.ck||0xb9a22a):0xd7a86e);
  }
@@ -2700,9 +2760,9 @@ function ambient(ts){
   D.p.rotation.y+=(nr-D.p.rotation.y)*.14;
  }
 }
-var lastT=performance.now();
+var usingXRLoop=false,lastT=performance.now();
 function frame(t){
- requestAnimationFrame(frame);
+ if(!usingXRLoop)requestAnimationFrame(frame);
  var dt=Math.min(.05,(t-lastT)/1000);lastT=t;
  var ts=t/1000;
  if(started&&run&&!paused&&!over)update(dt);
@@ -2737,6 +2797,8 @@ document.querySelectorAll('.tabs button').forEach(function(b){b.onclick=function
  $('bGuest').onclick=function(){PROF=mkGuest();seedColl();showMM();renderShop();renderProf();toast(L.tStart)};
  $('bOut').onclick=function(){LSrm('d17sess');PROF=null;showLogin()};
  $('bSolo').onclick=function(){startGame('solo')};
+ $('bVR').onclick=function(){if(!started)startGame('solo');enterVR()};
+ $('bVR2').onclick=function(){enterVR()};
  $('bHost').onclick=function(){hostSrv($('srvN').value.trim()||(PROF.name+' srv'),$('hidChk').checked)};
  $('bQuick').onclick=quickPlay;
  $('bJoin').onclick=function(){joinSrv($('codeIn').value)};
@@ -2759,6 +2821,9 @@ document.querySelectorAll('.tabs button').forEach(function(b){b.onclick=function
  $('setVol2').addEventListener('input',function(){SET.vol=this.value/100;$('volVal').textContent=this.value;if(MG)MG.gain.value=SET.vol;saveSet()});
  $('setGfx').value=SET.gfx;
  $('setGfx').addEventListener('change',function(){SET.gfx=this.value;saveSet();applyGfx()});
+ $('vrChk').checked=SET.vr;
+ $('vrChk').addEventListener('change',function(){SET.vr=$('vrChk').checked;saveSet();updVRBtn()});
+ updVRBtn();
 function hex(v){return parseInt(String(v).replace('#',''),16)}
  $('colShirt').value='#'+((PROF?PROF.cs||0x4a6b8a:0x4a6b8a).toString(16).padStart(6,'0'));
  $('colJeans').value='#'+((PROF?PROF.cj||0x2b3040:0x2b3040).toString(16).padStart(6,'0'));
