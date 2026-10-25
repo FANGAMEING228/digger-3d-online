@@ -768,7 +768,16 @@ function initProf(){
 }
 
 var cv=$('cv'),stg=$('stage');
-var RD=null,SN=null,CM=null,YO=null,PO=null,AM=null,FL=null,VM=null;
+var RD=null,SN=null,CM=null,YO=null,PO=null,AM=null,FL=null,VM=null,vrGrip0=null,vrGrip1=null;
+function mkVRHandMesh(){
+ var g=new THREE.Group();
+ var palm=new THREE.Mesh(new THREE.BoxGeometry(.06,.05,.09),new THREE.MeshStandardMaterial({color:0xd7a86e,roughness:.9}));
+ palm.position.set(0,0,.02);
+ var wrist=new THREE.Mesh(new THREE.CylinderGeometry(.018,.022,.06,8),new THREE.MeshStandardMaterial({color:0x2c2c2c,roughness:.6}));
+ wrist.rotation.x=Math.PI/2;wrist.position.set(0,0,-.04);
+ g.add(palm);g.add(wrist);
+ return g;
+}
 function mkRenderer(){
  var opts1={canvas:cv,antialias:true,alpha:false,powerPreference:'default'};
  try{return new THREE.WebGLRenderer(opts1)}catch(e1){}
@@ -800,6 +809,10 @@ function init3(){
   var ha=new THREE.Mesh(new THREE.BoxGeometry(.11,.11,.16),new THREE.MeshStandardMaterial({color:0xd7a86e,roughness:.9}));
   ha.position.set(.26,-.31,-.33);
   VM.add(th);VM.add(hd);VM.add(ha);VM.userData.hd=hd;VM.userData.hand=ha;CM.add(VM);
+  vrGrip0=RD.xr.getControllerGrip(0);vrGrip1=RD.xr.getControllerGrip(1);
+  vrGrip0.add(mkVRHandMesh());vrGrip1.add(mkVRHandMesh());
+  vrGrip0.visible=false;vrGrip1.visible=false;
+  SN.add(vrGrip0);SN.add(vrGrip1);
   resize();
   usingXRLoop=true;RD.setAnimationLoop(frame);
   return true;
@@ -859,6 +872,7 @@ function calibrateVRHeight(){
 function onVREnd(){
  vrActive=false;vrSession=null;
  if(VM)VM.visible=true;
+ if(vrGrip0)vrGrip0.visible=false;if(vrGrip1)vrGrip1.visible=false;
  resize();
  updVRBtn();
 }
@@ -872,6 +886,7 @@ function enterVR(){
   navigator.xr.requestSession('immersive-vr',{optionalFeatures:['local-floor','bounded-floor','dom-overlay'],domOverlay:{root:document.body}}).then(function(session){
    vrSession=session;vrActive=true;
    if(VM)VM.visible=false;
+   if(vrGrip0)vrGrip0.visible=true;if(vrGrip1)vrGrip1.visible=true;
    RD.xr.setReferenceSpaceType('local-floor');
    RD.xr.setSession(session).then(function(){updVRBtn()});
    session.addEventListener('end',onVREnd);
