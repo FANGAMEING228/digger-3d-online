@@ -331,7 +331,14 @@ input[type=color]{padding:2px;width:44px;height:34px;cursor:pointer}
    <div class="hint" style="margin-top:10px">Високий: далека видимість. Бульба: максимальна швидкість. Кольори одягу бачать усі гравці (і ти — в інвентарі/магазині).</div>
    <h3>🥽 VR (Meta Quest)</h3>
    <label class="chk"><input type="checkbox" id="vrChk"><span>Увімкнути VR-режим</span></label>
-   <div class="hint" id="vrHint" style="margin-top:6px">Відкрий цю сторінку в браузері шолома (Meta Quest Browser) за HTTPS-посиланням. Увімкни тут VR-режим — з'явиться кнопка «Увійти в VR» на вкладці ВИЛАЗКА та на паузі. Рух — лівий стик, поворот — правий стик, взаємодія — тригер.</div>
+   <div class="hint" id="vrHint" style="margin-top:6px">Відкрий цю сторінку в браузері шолома (Meta Quest Browser) за HTTPS-посиланням. Увімкни тут VR-режим — з'явиться кнопка «Увійти в VR» на вкладці ВИЛАЗКА та на паузі. Рух — лівий стик, поворот — правий стик.</div>
+   <div class="row" style="margin-top:10px"><span style="flex:1">Взаємодія / відкрити двері</span><select id="vrBAct" style="min-width:120px"></select></div>
+   <div class="row" style="margin-top:6px"><span style="flex:1">Маска (швидко)</span><select id="vrBMask" style="min-width:120px"></select></div>
+   <div class="row" style="margin-top:6px"><span style="flex:1">Калібрувати зріст</span><select id="vrBCalib" style="min-width:120px"></select></div>
+   <div class="hint" style="margin-top:6px">Підійди до входу у бункер (вентиляції чи дверей) і натисни кнопку «Взаємодія», щоб відкрити. Кнопку «Калібрувати зріст» тисни, стоячи рівно — твій поточний зріст у шоломі стане точкою відліку.</div>
+   <h3 style="margin-top:14px">📏 Калібрування зросту VR</h3>
+   <div class="row" style="margin-top:0"><input type="range" id="vrHSlide" min="-50" max="50" step="1" style="flex:1"><span id="vrHVal"></span></div>
+   <div class="hint" style="margin-top:6px">Ручна корекція зросту (см), якщо після автокалібрування в шоломі ти заввисокий чи замалий. Або натисни «Калібрувати зріст» на контролері прямо в VR.</div>
   </div>
   <div class="tb" id="tab-adm">
    <div id="admTabBody"></div>
@@ -706,7 +713,7 @@ function maskPic(it){
  return PIC[key];
 }
 
-var SET={sens:1,sound:true,inv:false,vol:.7,fov:72,gfx:'no',vr:false};
+var SET={sens:1,sound:true,inv:false,vol:.7,fov:72,gfx:'no',vr:false,vrBind:{act:0,mask:4,calib:1},vrHOff:0};
 try{var _s=JSON.parse(LSget('d17set')||'{}');for(var _k in _s)SET[_k]=_s[_k]}catch(e){}
 function saveSet(){LSset('d17set',JSON.stringify(SET))}
 var GFX={hi:{b:44,s:300,px:2},no:{b:26,s:170,px:1.5},lo:{b:18,s:120,px:1},po:{b:12,s:75,px:.6}};
@@ -810,12 +817,18 @@ function updVRBtn(){
  if(b1)b1.style.display=ok?'block':'none';
  if(b2)b2.style.display=(ok&&started)?'block':'none';
 }
+var VRBTN=[
+ {id:0,lb:'Тригер'},{id:1,lb:'Грип'},{id:3,lb:'Стік-клік'},{id:4,lb:'A/X'},{id:5,lb:'B/Y'}
+];
+function vrBindOf(k){var b=SET.vrBind||{};return (b[k]!==undefined?b[k]:{act:0,mask:4,calib:1}[k])}
 function vrInput(dt){
  var out={f:0,s:0};
  if(vrTurnLock>0)vrTurnLock=Math.max(0,vrTurnLock-dt);
  if(vrFireLock>0)vrFireLock=Math.max(0,vrFireLock-dt);
  if(vrMaskLock>0)vrMaskLock=Math.max(0,vrMaskLock-dt);
+ if(vrCalibLock>0)vrCalibLock=Math.max(0,vrCalibLock-dt);
  if(!vrSession)return out;
+ var bAct=vrBindOf('act'),bMask=vrBindOf('mask'),bCalib=vrBindOf('calib');
  var srcs=vrSession.inputSources;
  for(var i=0;i<srcs.length;i++){
   var src=srcs[i];if(!src||!src.gamepad)continue;
@@ -827,10 +840,21 @@ function vrInput(dt){
   }else if(src.handedness==='right'){
    if(vrTurnLock<=0&&Math.abs(sx)>.6){YO.rotation.y-=Math.sign(sx)*0.6;vrTurnLock=.35}
   }
-  if(bt[0]&&bt[0].pressed&&vrFireLock<=0){vrFireLock=.4;doInt()}
-  if(bt[4]&&bt[4].pressed&&vrMaskLock<=0){vrMaskLock=.5;quickToggleMask()}
+  if(bt[bAct]&&bt[bAct].pressed&&vrFireLock<=0){vrFireLock=.4;doInt()}
+  if(bt[bMask]&&bt[bMask].pressed&&vrMaskLock<=0){vrMaskLock=.5;quickToggleMask()}
+  if(bt[bCalib]&&bt[bCalib].pressed&&vrCalibLock<=0){vrCalibLock=.6;calibrateVRHeight()}
  }
  return out;
+}
+function calibrateVRHeight(){
+ if(!RD||!RD.xr||!vrActive||!CM)return;
+ try{
+  var cam=RD.xr.getCamera(CM);
+  var realY=cam.position.y;
+  vrHeightOffset+=(EYE-realY);
+  SET.vrHOff=vrHeightOffset;saveSet();
+  toast('📏 Висота в VR відкалібрована');
+ }catch(e){}
 }
 function onVREnd(){
  vrActive=false;vrSession=null;
@@ -844,7 +868,8 @@ function enterVR(){
  if(vrActive)return;
  navigator.xr.isSessionSupported('immersive-vr').then(function(sup){
   if(!sup){toast('Цей пристрій не підтримує VR.');return}
-  navigator.xr.requestSession('immersive-vr',{optionalFeatures:['local-floor','bounded-floor']}).then(function(session){
+  vrHeightOffset=SET.vrHOff||0;
+  navigator.xr.requestSession('immersive-vr',{optionalFeatures:['local-floor','bounded-floor','dom-overlay'],domOverlay:{root:document.body}}).then(function(session){
    vrSession=session;vrActive=true;
    if(VM)VM.visible=false;
    RD.xr.setReferenceSpaceType('local-floor');
@@ -977,7 +1002,7 @@ var bunkG=null,surfG=null,hemi=null,dl=null;
 var grateP=null,grateO=false,grateT=0;
 var alarm=false,rtime=Infinity,w60=false,w10=false;
 var torch=true,spr=false,bob=0,mmA=0,posA=0;
-var vrActive=false,vrSession=null,vrTurnLock=0,vrFireLock=0,vrMaskLock=0;
+var vrActive=false,vrSession=null,vrTurnLock=0,vrFireLock=0,vrMaskLock=0,vrCalibLock=0,vrHeightOffset=0;
 var wseed=0,cint=null,lad={x:0,z:0},goodLight=true,vault=null,jackpot=false,forceJackpot=false,JROOMS=[];
 var rem={},chatL=[],rost=[],mkMap={},escr={},worn=null,wornSuit=null,pname='Digger',picked={};
 
@@ -2506,7 +2531,7 @@ function startGame(mode,init){
  rost=[{id:NET.id||'me',name:pname}];
  zset(ZS);
  PL.x=0;PL.z=10;
- YO.position.set(PL.x,vrActive?0:EYE,PL.z);YO.rotation.y=0;PO.rotation.x=0;
+ YO.position.set(PL.x,vrActive?vrHeightOffset:EYE,PL.z);YO.rotation.y=0;PO.rotation.x=0;
  if(VM&&VM.userData.head)VM.userData.head.material.emissiveIntensity=0.7;
  chatL=[];drawChat();
  if(init){
@@ -2690,7 +2715,7 @@ function update(dt){
  var hs=Math.hypot(VX,VZ);
  if(PL.y<=.001&&hs>.3)bob+=hs*dt*2.2;
  var bb=Math.sin(bob)*.05*Math.min(1,hs/3);
- YO.position.set(PL.x,(vrActive?0:EYE)+PL.y+bb,PL.z);
+ YO.position.set(PL.x,(vrActive?vrHeightOffset:EYE)+PL.y+bb,PL.z);
  if(VM){VM.position.y=Math.sin(bob)*.012*Math.min(1,hs/3);VM.position.x=Math.cos(bob*.5)*.008;
   if(VM.userData.hand)VM.userData.hand.material.color.setHex(wornSuit?(PROF.ck||0xb9a22a):0xd7a86e);
  }
@@ -2824,6 +2849,24 @@ document.querySelectorAll('.tabs button').forEach(function(b){b.onclick=function
  $('vrChk').checked=SET.vr;
  $('vrChk').addEventListener('change',function(){SET.vr=$('vrChk').checked;saveSet();updVRBtn()});
  updVRBtn();
+ (function(){
+  var opts=VRBTN.map(function(o){return'<option value="'+o.id+'">'+o.lb+'</option>'}).join('');
+  var sAct=$('vrBAct'),sMask=$('vrBMask'),sCalib=$('vrBCalib');
+  sAct.innerHTML=opts;sMask.innerHTML=opts;sCalib.innerHTML=opts;
+  if(!SET.vrBind)SET.vrBind={act:0,mask:4,calib:1};
+  sAct.value=SET.vrBind.act;sMask.value=SET.vrBind.mask;sCalib.value=SET.vrBind.calib;
+  function wire(sel,key){sel.addEventListener('change',function(){SET.vrBind[key]=parseInt(sel.value,10);saveSet()})}
+  wire(sAct,'act');wire(sMask,'mask');wire(sCalib,'calib');
+  var hs=$('vrHSlide'),hv=$('vrHVal');
+  hs.value=Math.round((SET.vrHOff||0)*100);
+  hv.textContent=hs.value+' см';
+  hs.addEventListener('input',function(){
+   SET.vrHOff=parseInt(hs.value,10)/100;
+   hv.textContent=hs.value+' см';
+   saveSet();
+   if(vrActive)vrHeightOffset=SET.vrHOff;
+  });
+ })();
 function hex(v){return parseInt(String(v).replace('#',''),16)}
  $('colShirt').value='#'+((PROF?PROF.cs||0x4a6b8a:0x4a6b8a).toString(16).padStart(6,'0'));
  $('colJeans').value='#'+((PROF?PROF.cj||0x2b3040:0x2b3040).toString(16).padStart(6,'0'));
