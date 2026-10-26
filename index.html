@@ -769,13 +769,24 @@ function initProf(){
 
 var cv=$('cv'),stg=$('stage');
 var RD=null,SN=null,CM=null,YO=null,PO=null,AM=null,FL=null,VM=null,vrGrip0=null,vrGrip1=null;
-function mkVRHandMesh(){
+function mkVRHandMesh(side){
  var g=new THREE.Group();
- var palm=new THREE.Mesh(new THREE.BoxGeometry(.06,.05,.09),new THREE.MeshStandardMaterial({color:0xd7a86e,roughness:.9}));
- palm.position.set(0,0,.02);
- var wrist=new THREE.Mesh(new THREE.CylinderGeometry(.018,.022,.06,8),new THREE.MeshStandardMaterial({color:0x2c2c2c,roughness:.6}));
- wrist.rotation.x=Math.PI/2;wrist.position.set(0,0,-.04);
- g.add(palm);g.add(wrist);
+ var body=new THREE.MeshStandardMaterial({color:0x202024,roughness:.5,metalness:.25});
+ var acc=new THREE.MeshStandardMaterial({color:side==='left'?0x4a86c9:0xc9564a,roughness:.35,metalness:.15,emissive:side==='left'?0x0c2238:0x380f0a,emissiveIntensity:.5});
+ var grip=new THREE.Mesh(new THREE.CylinderGeometry(.018,.021,.09,12),body);
+ grip.rotation.x=1.15;grip.position.set(0,-.025,.02);
+ var cap=new THREE.Mesh(new THREE.SphereGeometry(.018,10,8),body);
+ cap.position.set(0,-.065,.055);
+ var ring=new THREE.Mesh(new THREE.TorusGeometry(.036,.0075,8,22),body);
+ ring.rotation.x=1.3;ring.position.set(0,.01,-.03);
+ var plate=new THREE.Mesh(new THREE.CylinderGeometry(.026,.026,.012,16),body);
+ plate.rotation.x=1.15;plate.position.set(0,.006,.012);
+ var stick=new THREE.Mesh(new THREE.CylinderGeometry(.009,.01,.014,10),acc);
+ stick.position.set(0,.016,.018);
+ var btn1=new THREE.Mesh(new THREE.CylinderGeometry(.006,.006,.006,8),acc);
+ btn1.position.set(.016,.012,.03);
+ var btn2=btn1.clone();btn2.position.set(-.004,.012,.034);
+ g.add(grip);g.add(cap);g.add(ring);g.add(plate);g.add(stick);g.add(btn1);g.add(btn2);
  return g;
 }
 function mkRenderer(){
@@ -810,7 +821,7 @@ function init3(){
   ha.position.set(.26,-.31,-.33);
   VM.add(th);VM.add(hd);VM.add(ha);VM.userData.hd=hd;VM.userData.hand=ha;CM.add(VM);
   vrGrip0=RD.xr.getControllerGrip(0);vrGrip1=RD.xr.getControllerGrip(1);
-  vrGrip0.add(mkVRHandMesh());vrGrip1.add(mkVRHandMesh());
+  vrGrip0.add(mkVRHandMesh('left'));vrGrip1.add(mkVRHandMesh('right'));
   vrGrip0.visible=false;vrGrip1.visible=false;
   SN.add(vrGrip0);SN.add(vrGrip1);
   resize();
@@ -868,6 +879,12 @@ function calibrateVRHeight(){
   SET.vrHOff=vrHeightOffset;saveSet();
   toast('📏 Висота в VR відкалібрована');
  }catch(e){}
+}
+var _vrFwd=new THREE.Vector3();
+function vrHeadYaw(){
+ if(!CM)return YO?YO.rotation.y:0;
+ CM.getWorldDirection(_vrFwd);
+ return Math.atan2(-_vrFwd.x,-_vrFwd.z);
 }
 function onVREnd(){
  vrActive=false;vrSession=null;
@@ -2716,7 +2733,7 @@ function update(dt){
  var spr2=(keys.ShiftLeft||keys.ShiftRight||spr)&&ml>.01;
  var mspd=chocActive?(worn?1:3):(worn?.85:1);
  var bs=zone===ZS?4.2:3.4,sp=bs*(admSpd?2:1)*mspd*(zone===ZB&&bat<15&&!godBat?.8:1);
- var yaw=YO.rotation.y;
+ var yaw=vrActive?vrHeadYaw():YO.rotation.y;
  var tx=(-Math.sin(yaw)*f+Math.cos(yaw)*s)*sp;
  var tz=(-Math.cos(yaw)*f-Math.sin(yaw)*s)*sp;
  var k=Math.min(1,12*dt);
